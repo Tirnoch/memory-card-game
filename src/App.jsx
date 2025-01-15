@@ -1,14 +1,21 @@
 import { useEffect, useState, useRef } from 'react';
 import Header from './components/Header';
-import Card from './components/Card';
-import Game from './components/Game';
+import CardContainer from './components/CardContainer';
 
-function App() {
+export default function App() {
+  // fetches the first 9 results from the API at first render
+  // useEffect(() => {
+  //   fetchAPI().then((result) => {
+  //     setRandomArray(result.splice(0, 9));
+  //   });
+  // }, []);
+  // console.log(randomArray);
+  // will be re-evaluated after the API connection establishes
+
   return (
     <>
       <Header />
+      <CardContainer />
     </>
   );
 }
-
-export default App;
