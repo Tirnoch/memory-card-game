@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import Header from './components/Header';
 import shuffle from './components/shuffle';
 import URL_ARRAY from './components/URL_ARRAY';
-import Card from './components/Card.jsx';
+import Card from './components/CArd';
 
 export default function App() {
   const [game, setGame] = useState({
