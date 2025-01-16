@@ -19,11 +19,7 @@ export default function App() {
       const updatedClickedCards = [...prev.clickedCards];
       //Game Restart
       if (updatedClickedCards.find((newClick) => newClick == clickedCard)) {
-        console.log(
-          `Game Over, clicked cards are ${updatedClickedCards.map(
-            (poke) => poke.name
-          )} and score is ${updatedClickedCards.length}`
-        );
+        shuffle(updatedArray);
         return {
           ...prev,
           gameBoard: updatedArray,
@@ -35,13 +31,6 @@ export default function App() {
 
         updatedClickedCards.push(clickedCard);
 
-        console.log(
-          `Game is not over, clicked card is ${
-            clickedCard.name
-          } and the whole group is  ${updatedClickedCards.map(
-            (poke) => poke.name
-          )}`
-        );
         shuffle(updatedArray);
         if (game.currentScore >= game.highScore) {
           return {
@@ -55,7 +44,6 @@ export default function App() {
           return {
             ...prev,
             gameBoard: updatedArray,
-
             currentScore: updatedClickedCards.length,
             clickedCards: [...updatedClickedCards],
           };
@@ -66,7 +54,10 @@ export default function App() {
   return (
     <>
       <Header highScore={game.highScore} currentScore={game.currentScore} />
-      <div id="gameBoard" className="grid grid-rows-3 grid-cols-3">
+      <div
+        id="gameBoard"
+        className="grid grid-rows-auto grid-cols-3 gap-10 pt-10 px-10 justify-items-center"
+      >
         {game.gameBoard.map((card, index) => (
           <Card
             key={card.id}
