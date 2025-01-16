@@ -1,7 +1,7 @@
 const Card = ({ url, name, handleClick }) => {
   return (
     <button
-      className="rounded-xl border-stone-600 border-2 hover:bg-slate-300 active:bg-slate-200 relative max-[600px]:w-24"
+      className="rounded-xl border-stone-600 border-2 hover:bg-slate-300 active:bg-slate-200 relative max-[600px]:w-28"
       onClick={handleClick}
     >
       <img
