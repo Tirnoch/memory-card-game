@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types';
+
 const Card = ({ url, name, handleClick, feedbackStatus }) => {
   // Generate the appropriate CSS classes based on feedback status
   const getFeedbackClass = () => {
@@ -34,6 +36,13 @@ const Card = ({ url, name, handleClick, feedbackStatus }) => {
       />
     </button>
   );
+};
+
+Card.propTypes = {
+  url: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  handleClick: PropTypes.func.isRequired,
+  feedbackStatus: PropTypes.oneOf(['success', 'error', null]),
 };
 
 export default Card;

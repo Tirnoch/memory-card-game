@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types';
+
 const Header = ({ highScore, currentScore }) => {
   return (
     <div className="bg-gradient-to-tr from-sky-700 to-sky-900 text-slate-200 flex flex-col sm:flex-row items-center p-3 sm:p-4 shadow-md">
@@ -14,6 +16,11 @@ const Header = ({ highScore, currentScore }) => {
       </div>
     </div>
   );
+};
+
+Header.propTypes = {
+  highScore: PropTypes.number.isRequired,
+  currentScore: PropTypes.number.isRequired,
 };
 
 export default Header;
