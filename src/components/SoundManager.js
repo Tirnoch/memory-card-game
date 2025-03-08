@@ -6,6 +6,7 @@ class SoundManager {
     this.sounds = {
       click: new Audio('/sounds/click.mp3'),
       success: new Audio('/sounds/click.mp3'), // Reuse click sound as success
+      error: new Audio('/sounds/error.mp3'), // Make sure error sound exists
       win: new Audio('/sounds/win.mp3'),
       lose: new Audio('/sounds/lose.mp3'),
     };

@@ -22,6 +22,7 @@ export default function App() {
     showGameOver: false,
     gameResult: null, // 'win' or 'lose',
     soundsLoaded: false, // Track if Pokemon sounds are loaded
+    pendingDifficulty: null, // Store pending difficulty change from game over screen
   });
 
   // Preload sound effects when component mounts
@@ -62,6 +63,17 @@ export default function App() {
 
     loadPokemonData();
   }, [game.difficultyLevel]);
+
+  // Apply pending difficulty change when starting a new game
+  useEffect(() => {
+    if (game.pendingDifficulty && !game.showGameOver) {
+      setGame((prev) => ({
+        ...prev,
+        difficultyLevel: prev.pendingDifficulty,
+        pendingDifficulty: null,
+      }));
+    }
+  }, [game.pendingDifficulty, game.showGameOver]);
 
   // Save high score and difficulty to localStorage whenever they change
   useEffect(() => {
@@ -119,9 +131,10 @@ export default function App() {
   const handleGameOverDifficultyChange = (newDifficulty) => {
     if (newDifficulty !== game.difficultyLevel) {
       soundManager.play('click');
+      // Store the selection as pending, to be applied when the game restarts
       setGame((prev) => ({
         ...prev,
-        difficultyLevel: newDifficulty,
+        pendingDifficulty: newDifficulty,
       }));
     }
   };
@@ -129,6 +142,10 @@ export default function App() {
   // Start a new game by fetching new Pokemon
   const startNewGame = async () => {
     soundManager.play('click');
+
+    // First, apply any pending difficulty change
+    const effectiveDifficulty = game.pendingDifficulty || game.difficultyLevel;
+
     try {
       setGame((prev) => ({
         ...prev,
@@ -137,9 +154,11 @@ export default function App() {
         currentScore: 0,
         showGameOver: false,
         soundsLoaded: false,
+        difficultyLevel: effectiveDifficulty,
+        pendingDifficulty: null,
       }));
 
-      const newPokemonData = await fetchPokemonData(game.difficultyLevel);
+      const newPokemonData = await fetchPokemonData(effectiveDifficulty);
 
       // Preload sounds for the new Pokemon set
       soundManager.preloadPokemonSounds(newPokemonData);
@@ -168,14 +187,14 @@ export default function App() {
       const clickedCard = updatedArray[index];
       const updatedClickedCards = [...prev.clickedCards];
 
-      //Game Restart
+      //Game Restart - when clicking the same card twice (bad click)
       if (
         updatedClickedCards.find((newClick) => newClick.id === clickedCard.id)
       ) {
-        // Play defeat sound for the duplicate clicked Pokemon
-        soundManager.playPokemonSound(clickedCard.name, true);
-
-        setTimeout(() => soundManager.play('lose'), 500);
+        // Play error sounds - first the Pokemon defeat sound, then the general lose sound
+        soundManager.play('error'); // Immediate feedback
+        soundManager.playPokemonSound(clickedCard.name, true); // Pokemon defeat sound
+        setTimeout(() => soundManager.play('lose'), 500); // Lose sound after delay
 
         shuffle(updatedArray);
 
@@ -190,6 +209,7 @@ export default function App() {
           gameResult: 'lose',
         };
       } else {
+        // Good click - selecting a new card
         clickedCard.clicked = true;
         updatedClickedCards.push(clickedCard);
 
@@ -286,7 +306,7 @@ export default function App() {
         result={game.gameResult}
         onPlayAgain={startNewGame}
         onChangeDifficulty={handleGameOverDifficultyChange}
-        currentDifficulty={game.difficultyLevel}
+        currentDifficulty={game.pendingDifficulty || game.difficultyLevel}
       />
 
       <SoundToggle />
