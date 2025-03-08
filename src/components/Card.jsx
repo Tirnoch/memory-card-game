@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
 
-const Card = ({ url, name, handleClick, feedbackStatus }) => {
+const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
   const [isAnimating, setIsAnimating] = useState(false);
 
   // Set animation when feedback status changes, but only for error
@@ -26,17 +26,27 @@ const Card = ({ url, name, handleClick, feedbackStatus }) => {
         isAnimating ? 'animate-shake scale-105' : ''
       }`;
     } else {
-      return `${baseClasses} hover:bg-slate-300 active:bg-slate-200 hover:shadow-md hover:scale-105 border-stone-600`;
+      return `${baseClasses} ${
+        isDisabled
+          ? 'opacity-80 cursor-not-allowed'
+          : 'hover:bg-slate-300 active:bg-slate-200 hover:shadow-md hover:scale-105'
+      } border-stone-600`;
     }
   };
 
   // Handle click without animation delay for normal clicks
   const handleCardClick = () => {
-    handleClick();
+    if (!isDisabled) {
+      handleClick();
+    }
   };
 
   return (
-    <button className={getFeedbackClass()} onClick={handleCardClick}>
+    <button
+      className={getFeedbackClass()}
+      onClick={handleCardClick}
+      disabled={isDisabled}
+    >
       <p
         className={`text-center font-medium text-xs sm:text-sm md:text-base w-full px-1 truncate ${
           feedbackStatus === 'error' ? 'text-red-700 font-bold' : ''
@@ -50,6 +60,8 @@ const Card = ({ url, name, handleClick, feedbackStatus }) => {
         className={`p-2 sm:p-3 md:p-4 h-auto w-auto max-h-[80%] object-contain ${
           feedbackStatus === 'error' && isAnimating
             ? 'animate-[wiggle_0.2s_ease_3]'
+            : isDisabled
+            ? ''
             : 'hover:scale-110 transition-transform duration-300'
         }`}
         draggable="false"
@@ -63,6 +75,11 @@ Card.propTypes = {
   name: PropTypes.string.isRequired,
   handleClick: PropTypes.func.isRequired,
   feedbackStatus: PropTypes.oneOf(['success', 'error', null]),
+  isDisabled: PropTypes.bool,
+};
+
+Card.defaultProps = {
+  isDisabled: false,
 };
 
 export default Card;

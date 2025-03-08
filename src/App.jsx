@@ -23,6 +23,7 @@ export default function App() {
     gameResult: null, // 'win' or 'lose',
     soundsLoaded: false, // Track if Pokemon sounds are loaded
     pendingDifficulty: null, // Store pending difficulty change from game over screen
+    isGameLocked: false, // Prevent interaction during game over sequence
   });
 
   // Preload sound effects when component mounts
@@ -109,9 +110,17 @@ export default function App() {
         ...prev,
         showGameOver: true,
         gameResult: 'win',
+        isGameLocked: true, // Lock game on win
       }));
     }
   }, [game.currentScore, game.difficultyLevel]);
+
+  // Reset game lock when game over modal is closed
+  useEffect(() => {
+    if (!game.showGameOver && game.isGameLocked) {
+      setGame((prev) => ({ ...prev, isGameLocked: false }));
+    }
+  }, [game.showGameOver, game.isGameLocked]);
 
   // Handle difficulty change during active gameplay (from header)
   const handleDifficultyChange = (newDifficulty) => {
@@ -154,6 +163,7 @@ export default function App() {
         soundsLoaded: false,
         difficultyLevel: effectiveDifficulty,
         pendingDifficulty: null,
+        isGameLocked: false, // Ensure game is unlocked when starting a new game
       }));
 
       const newPokemonData = await fetchPokemonData(effectiveDifficulty);
@@ -195,6 +205,11 @@ export default function App() {
   };
 
   const handleClick = (index) => {
+    // Prevent clicks if game is locked or loading
+    if (game.isGameLocked || game.isLoading || !game.soundsLoaded) {
+      return;
+    }
+
     soundManager.play('click');
 
     const updatedArray = [...game.gameBoard];
@@ -205,6 +220,12 @@ export default function App() {
     if (
       updatedClickedCards.find((newClick) => newClick.id === clickedCard.id)
     ) {
+      // Lock the game immediately to prevent further interaction
+      setGame((prev) => ({
+        ...prev,
+        isGameLocked: true,
+      }));
+
       // Play error sounds BEFORE updating state
       playBadClickSounds(clickedCard.name);
 
@@ -218,6 +239,7 @@ export default function App() {
         currentScore: 0,
         clickedCards: [],
         lastClickResult: 'error',
+        isGameLocked: true, // Ensure game is locked
       }));
 
       // Delay showing the game over screen to give time for sounds to play
@@ -226,6 +248,7 @@ export default function App() {
           ...prev,
           showGameOver: true,
           gameResult: 'lose',
+          isGameLocked: true, // Maintain lock during game over
         }));
       }, 1200); // Delay showing game over screen until after sounds
     } else {
@@ -317,6 +340,7 @@ export default function App() {
                 id={card.id}
                 handleClick={() => handleClick(index)}
                 feedbackStatus={game.lastClickResult}
+                isDisabled={game.isGameLocked}
               />
             ))}
           </div>
