@@ -20,25 +20,33 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
     const baseClasses =
       'rounded-xl border-2 relative w-full aspect-square flex flex-col items-center justify-center transition-all duration-300';
 
+    // First decide on disabled state
+    const disabledClasses = isDisabled
+      ? 'opacity-70 cursor-not-allowed pointer-events-none'
+      : '';
+
     if (feedbackStatus === 'error') {
       // Enhanced error animation
       return `${baseClasses} border-red-500 bg-red-100 shadow-lg shadow-red-300 ${
         isAnimating ? 'animate-shake scale-105' : ''
-      }`;
+      } ${disabledClasses}`;
     } else {
       return `${baseClasses} ${
         isDisabled
-          ? 'opacity-80 cursor-not-allowed'
+          ? disabledClasses
           : 'hover:bg-slate-300 active:bg-slate-200 hover:shadow-md hover:scale-105'
       } border-stone-600`;
     }
   };
 
   // Handle click without animation delay for normal clicks
-  const handleCardClick = () => {
-    if (!isDisabled) {
-      handleClick();
+  const handleCardClick = (e) => {
+    if (isDisabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
     }
+    handleClick();
   };
 
   return (
@@ -46,6 +54,7 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
       className={getFeedbackClass()}
       onClick={handleCardClick}
       disabled={isDisabled}
+      aria-disabled={isDisabled}
     >
       <p
         className={`text-center font-medium text-xs sm:text-sm md:text-base w-full px-1 truncate ${
