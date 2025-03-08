@@ -7,6 +7,8 @@ import {
   getCardCountByDifficulty,
 } from './components/fetchAPI';
 import GameOverModal from './components/GameOverModal';
+import soundManager from './components/SoundManager';
+import SoundToggle from './components/SoundToggle';
 
 export default function App() {
   const [game, setGame] = useState({
@@ -20,6 +22,11 @@ export default function App() {
     showGameOver: false,
     gameResult: null, // 'win' or 'lose'
   });
+
+  // Preload sound effects when component mounts
+  useEffect(() => {
+    soundManager.preload();
+  }, []);
 
   // Fetch Pokemon data on initial component mount or when difficulty changes
   useEffect(() => {
@@ -71,6 +78,7 @@ export default function App() {
 
     // If player has clicked all cards without duplicates, they win
     if (game.currentScore === cardCount) {
+      soundManager.play('win');
       setGame((prev) => ({
         ...prev,
         showGameOver: true,
@@ -82,6 +90,7 @@ export default function App() {
   // Handle difficulty change
   const handleDifficultyChange = (newDifficulty) => {
     if (newDifficulty !== game.difficultyLevel) {
+      soundManager.play('click');
       setGame((prev) => ({
         ...prev,
         difficultyLevel: newDifficulty,
@@ -94,6 +103,7 @@ export default function App() {
 
   // Start a new game by fetching new Pokemon
   const startNewGame = async () => {
+    soundManager.play('click');
     try {
       setGame((prev) => ({
         ...prev,
@@ -117,6 +127,7 @@ export default function App() {
   };
 
   const handleClick = (index) => {
+    soundManager.play('click');
     setGame((prev) => {
       const updatedArray = [...prev.gameBoard];
       const clickedCard = updatedArray[index];
@@ -126,6 +137,10 @@ export default function App() {
       if (
         updatedClickedCards.find((newClick) => newClick.id === clickedCard.id)
       ) {
+        // Play error sound for duplicate click
+        soundManager.play('error');
+        setTimeout(() => soundManager.play('lose'), 500);
+
         shuffle(updatedArray);
 
         // Show game over modal with lose result
@@ -142,6 +157,9 @@ export default function App() {
         clickedCard.clicked = true;
         updatedClickedCards.push(clickedCard);
         shuffle(updatedArray);
+
+        // Play success sound for new card
+        soundManager.play('success');
 
         if (prev.currentScore >= prev.highScore) {
           return {
@@ -222,6 +240,8 @@ export default function App() {
         onPlayAgain={startNewGame}
         onChangeDifficulty={handleDifficultyChange}
       />
+
+      <SoundToggle />
     </div>
   );
 }
