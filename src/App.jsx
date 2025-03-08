@@ -24,6 +24,7 @@ export default function App() {
     soundsLoaded: false, // Track if Pokemon sounds are loaded
     pendingDifficulty: null, // Store pending difficulty change from game over screen
     isGameLocked: false, // Prevent interaction during game over sequence
+    transitionLock: false, // Additional lock for the transition period
   });
 
   // Preload sound effects when component mounts
@@ -87,17 +88,20 @@ export default function App() {
     if (game.lastClickResult) {
       const timer = setTimeout(
         () => {
-          setGame((prev) => ({
-            ...prev,
-            lastClickResult: null,
-          }));
+          // Don't reset visual feedback during transition to game over
+          if (!game.transitionLock) {
+            setGame((prev) => ({
+              ...prev,
+              lastClickResult: null,
+            }));
+          }
         },
         game.lastClickResult === 'error' ? 400 : 700
       ); // Shorter time for error feedback
 
       return () => clearTimeout(timer);
     }
-  }, [game.lastClickResult]);
+  }, [game.lastClickResult, game.transitionLock]);
 
   // Check for win condition
   useEffect(() => {
@@ -111,6 +115,7 @@ export default function App() {
         showGameOver: true,
         gameResult: 'win',
         isGameLocked: true, // Lock game on win
+        transitionLock: true,
       }));
     }
   }, [game.currentScore, game.difficultyLevel]);
@@ -118,7 +123,11 @@ export default function App() {
   // Reset game lock when game over modal is closed
   useEffect(() => {
     if (!game.showGameOver && game.isGameLocked) {
-      setGame((prev) => ({ ...prev, isGameLocked: false }));
+      setGame((prev) => ({
+        ...prev,
+        isGameLocked: false,
+        transitionLock: false,
+      }));
     }
   }, [game.showGameOver, game.isGameLocked]);
 
@@ -164,6 +173,7 @@ export default function App() {
         difficultyLevel: effectiveDifficulty,
         pendingDifficulty: null,
         isGameLocked: false, // Ensure game is unlocked when starting a new game
+        transitionLock: false,
       }));
 
       const newPokemonData = await fetchPokemonData(effectiveDifficulty);
@@ -205,8 +215,13 @@ export default function App() {
   };
 
   const handleClick = (index) => {
-    // Prevent clicks if game is locked or loading
-    if (game.isGameLocked || game.isLoading || !game.soundsLoaded) {
+    // Prevent clicks if game is locked, transitioning, loading, or sounds not loaded
+    if (
+      game.isGameLocked ||
+      game.transitionLock ||
+      game.isLoading ||
+      !game.soundsLoaded
+    ) {
       return;
     }
 
@@ -220,27 +235,29 @@ export default function App() {
     if (
       updatedClickedCards.find((newClick) => newClick.id === clickedCard.id)
     ) {
-      // Lock the game immediately to prevent further interaction
+      // IMMEDIATELY lock the game to prevent any further interaction
+      // This must be done synchronously before any async operations
       setGame((prev) => ({
         ...prev,
         isGameLocked: true,
+        transitionLock: true,
+        lastClickResult: 'error',
+        clickedCards: [],
+        currentScore: 0,
       }));
 
-      // Play error sounds BEFORE updating state
-      playBadClickSounds(clickedCard.name);
-
-      // Shuffle the array
+      // After locking the game, play sounds and show visual feedback
+      // Shuffle array for visual feedback
       shuffle(updatedArray);
 
-      // First update the visuals for error feedback
+      // Update the game board display
       setGame((prev) => ({
         ...prev,
         gameBoard: updatedArray,
-        currentScore: 0,
-        clickedCards: [],
-        lastClickResult: 'error',
-        isGameLocked: true, // Ensure game is locked
       }));
+
+      // Play the error sounds
+      playBadClickSounds(clickedCard.name);
 
       // Delay showing the game over screen to give time for sounds to play
       setTimeout(() => {
@@ -248,7 +265,6 @@ export default function App() {
           ...prev,
           showGameOver: true,
           gameResult: 'lose',
-          isGameLocked: true, // Maintain lock during game over
         }));
       }, 1200); // Delay showing game over screen until after sounds
     } else {
@@ -328,21 +344,32 @@ export default function App() {
             </p>
           </div>
         ) : (
-          <div
-            id="gameBoard"
-            className={`flex-1 grid ${getGridClasses()} gap-3 sm:gap-6 md:gap-8 p-4 sm:p-6 md:p-10 justify-items-center content-start mx-auto w-full max-w-7xl`}
-          >
-            {game.gameBoard.map((card, index) => (
-              <Card
-                key={card.id}
-                url={card.url}
-                name={card.name}
-                id={card.id}
-                handleClick={() => handleClick(index)}
-                feedbackStatus={game.lastClickResult}
-                isDisabled={game.isGameLocked}
-              />
-            ))}
+          <div className="relative w-full flex-1">
+            {/* Overlay to prevent clicks during transition */}
+            {game.transitionLock && !game.showGameOver && (
+              <div className="absolute inset-0 z-10 bg-black bg-opacity-20 flex items-center justify-center pointer-events-auto">
+                <div className="text-white text-xl font-bold shadow-xl px-4 py-2 rounded-lg bg-black bg-opacity-50">
+                  Game Over
+                </div>
+              </div>
+            )}
+
+            <div
+              id="gameBoard"
+              className={`flex-1 grid ${getGridClasses()} gap-3 sm:gap-6 md:gap-8 p-4 sm:p-6 md:p-10 justify-items-center content-start mx-auto w-full max-w-7xl`}
+            >
+              {game.gameBoard.map((card, index) => (
+                <Card
+                  key={card.id}
+                  url={card.url}
+                  name={card.name}
+                  id={card.id}
+                  handleClick={() => handleClick(index)}
+                  feedbackStatus={game.lastClickResult}
+                  isDisabled={game.isGameLocked || game.transitionLock}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
