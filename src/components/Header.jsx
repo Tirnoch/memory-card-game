@@ -5,7 +5,14 @@ const Header = ({
   currentScore,
   difficultyLevel,
   onChangeDifficulty,
+  isDisabled,
 }) => {
+  const handleDifficultyChange = (e) => {
+    if (!isDisabled) {
+      onChangeDifficulty(e.target.value);
+    }
+  };
+
   return (
     <div className="bg-gradient-to-tr from-sky-700 to-sky-900 text-slate-200 flex flex-col sm:flex-row items-center p-3 sm:p-4 shadow-md">
       <h1 className="text-xl sm:text-2xl md:text-3xl font-bold sm:flex-1 mb-2 sm:mb-0">
@@ -23,9 +30,12 @@ const Header = ({
         </div>
 
         <select
-          className="bg-sky-600 text-white px-3 py-1 rounded-lg text-sm sm:text-base cursor-pointer border border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-300"
+          className={`bg-sky-600 text-white px-3 py-1 rounded-lg text-sm sm:text-base cursor-pointer border border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-300 ${
+            isDisabled ? 'opacity-70 cursor-not-allowed' : ''
+          }`}
           value={difficultyLevel}
-          onChange={(e) => onChangeDifficulty(e.target.value)}
+          onChange={handleDifficultyChange}
+          disabled={isDisabled}
         >
           <option value="easy">Easy (8 cards)</option>
           <option value="medium">Medium (12 cards)</option>
@@ -41,6 +51,11 @@ Header.propTypes = {
   currentScore: PropTypes.number.isRequired,
   difficultyLevel: PropTypes.string.isRequired,
   onChangeDifficulty: PropTypes.func.isRequired,
+  isDisabled: PropTypes.bool,
+};
+
+Header.defaultProps = {
+  isDisabled: false,
 };
 
 export default Header;
