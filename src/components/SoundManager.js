@@ -51,39 +51,12 @@ class SoundManager {
       const cacheKey = `${pokemonName}-${isDefeatSound ? 'defeat' : 'cry'}`;
 
       if (!this.pokemonSoundCache[cacheKey]) {
-        // Fetch Pokemon data to get ID
-        const response = await fetch(
-          `https://pokeapi.co/api/v2/pokemon/${pokemonName.toLowerCase()}`
-        );
+        // No cached sound - load with fallback
+        this.play(isDefeatSound ? 'lose' : 'click'); // Play basic sound immediately
 
-        if (!response.ok) {
-          console.warn(`Could not find Pokemon: ${pokemonName}`);
-          // Play a fallback sound
-          this.play(isDefeatSound ? 'lose' : 'click');
-          return;
-        }
-
-        // Verification succeeds if we get to this point, meaning it's a valid Pokemon
-        await response.json();
-
-        // Create audio element for the Pokemon cry
-        // For defeat sound, we'll use a different format or fallback to the default lose sound
-        if (isDefeatSound) {
-          // No specific defeat sounds in PokeAPI, so we'll play a low-pitched version of the cry
-          const audio = new Audio(
-            `https://play.pokemonshowdown.com/audio/cries/${pokemonName.toLowerCase()}.mp3`
-          );
-          audio.playbackRate = 0.7; // Slow it down to sound like defeat
-          audio.volume = this.sounds.lose.volume * 0.7;
-          this.pokemonSoundCache[cacheKey] = audio;
-        } else {
-          // For normal cry, use the Pokemon Showdown cry sounds which are more distinguishable
-          const audio = new Audio(
-            `https://play.pokemonshowdown.com/audio/cries/${pokemonName.toLowerCase()}.mp3`
-          );
-          audio.volume = this.sounds.click.volume;
-          this.pokemonSoundCache[cacheKey] = audio;
-        }
+        // Also attempt to fetch the Pokemon sound for next time
+        this.loadPokemonSound(pokemonName, isDefeatSound);
+        return;
       }
 
       // Play the sound from cache
@@ -98,6 +71,86 @@ class SoundManager {
       console.error(`Error playing Pokemon sound for ${pokemonName}:`, error);
       // Fallback to regular sounds
       this.play(isDefeatSound ? 'lose' : 'click');
+    }
+  }
+
+  /**
+   * Pre-load Pokemon sounds for a list of Pokemon
+   * @param {Array} pokemonList - List of Pokemon objects with names
+   */
+  async preloadPokemonSounds(pokemonList) {
+    if (!pokemonList || !pokemonList.length) return;
+
+    // Create a queue of promises to load sounds in parallel (with limits)
+    const loadPromises = pokemonList.map((pokemon) =>
+      this.loadPokemonSound(pokemon.name)
+    );
+
+    // We don't need to await these - they'll load in the background
+    Promise.allSettled(loadPromises).then((results) => {
+      const successCount = results.filter(
+        (r) => r.status === 'fulfilled'
+      ).length;
+      console.log(
+        `Preloaded ${successCount}/${pokemonList.length} Pokemon sounds`
+      );
+    });
+  }
+
+  /**
+   * Load and cache a Pokemon sound without playing it
+   * @param {string} pokemonName - Name of the Pokemon
+   * @param {boolean} isDefeatSound - Whether to load defeat sound
+   * @returns {Promise} - Promise that resolves when sound is loaded
+   */
+  async loadPokemonSound(pokemonName, isDefeatSound = false) {
+    try {
+      const cacheKey = `${pokemonName}-${isDefeatSound ? 'defeat' : 'cry'}`;
+
+      // If already cached, don't reload
+      if (this.pokemonSoundCache[cacheKey]) {
+        return Promise.resolve(this.pokemonSoundCache[cacheKey]);
+      }
+
+      // Direct URL to Pokemon Showdown cry sound
+      const soundUrl = `https://play.pokemonshowdown.com/audio/cries/${pokemonName.toLowerCase()}.mp3`;
+
+      // Create audio element
+      const audio = new Audio(soundUrl);
+
+      if (isDefeatSound) {
+        audio.playbackRate = 0.7; // Slow down for defeat sound
+        audio.volume = this.sounds.lose.volume * 0.7;
+      } else {
+        audio.volume = this.sounds.click.volume;
+      }
+
+      // Wait for the audio to be loadable
+      return new Promise((resolve, reject) => {
+        audio.addEventListener(
+          'canplaythrough',
+          () => {
+            this.pokemonSoundCache[cacheKey] = audio;
+            resolve(audio);
+          },
+          { once: true }
+        );
+
+        audio.addEventListener(
+          'error',
+          (e) => {
+            console.warn(`Failed to load Pokemon sound for ${pokemonName}:`, e);
+            reject(e);
+          },
+          { once: true }
+        );
+
+        // Start loading
+        audio.load();
+      });
+    } catch (error) {
+      console.error(`Error loading Pokemon sound for ${pokemonName}:`, error);
+      return Promise.reject(error);
     }
   }
 

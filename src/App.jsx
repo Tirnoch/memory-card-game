@@ -20,7 +20,8 @@ export default function App() {
     isLoading: true,
     difficultyLevel: localStorage.getItem('difficultyLevel') || 'medium',
     showGameOver: false,
-    gameResult: null, // 'win' or 'lose'
+    gameResult: null, // 'win' or 'lose',
+    soundsLoaded: false, // Track if Pokemon sounds are loaded
   });
 
   // Preload sound effects when component mounts
@@ -32,17 +33,30 @@ export default function App() {
   useEffect(() => {
     const loadPokemonData = async () => {
       try {
-        setGame((prev) => ({ ...prev, isLoading: true }));
+        setGame((prev) => ({
+          ...prev,
+          isLoading: true,
+          soundsLoaded: false,
+        }));
+
         const pokemonData = await fetchPokemonData(game.difficultyLevel);
+
+        // Start preloading Pokemon sounds
+        soundManager.preloadPokemonSounds(pokemonData);
 
         setGame((prev) => ({
           ...prev,
           gameBoard: shuffle([...pokemonData]),
           isLoading: false,
+          soundsLoaded: true,
         }));
       } catch (error) {
         console.error('Failed to load Pokemon data:', error);
-        setGame((prev) => ({ ...prev, isLoading: false }));
+        setGame((prev) => ({
+          ...prev,
+          isLoading: false,
+          soundsLoaded: true,
+        }));
       }
     };
 
@@ -111,23 +125,33 @@ export default function App() {
         clickedCards: [],
         currentScore: 0,
         showGameOver: false,
+        soundsLoaded: false,
       }));
 
       const newPokemonData = await fetchPokemonData(game.difficultyLevel);
+
+      // Preload sounds for the new Pokemon set
+      soundManager.preloadPokemonSounds(newPokemonData);
 
       setGame((prev) => ({
         ...prev,
         gameBoard: shuffle([...newPokemonData]),
         isLoading: false,
+        soundsLoaded: true,
       }));
     } catch (error) {
       console.error('Failed to start new game:', error);
-      setGame((prev) => ({ ...prev, isLoading: false }));
+      setGame((prev) => ({
+        ...prev,
+        isLoading: false,
+        soundsLoaded: true,
+      }));
     }
   };
 
   const handleClick = (index) => {
     soundManager.play('click');
+
     setGame((prev) => {
       const updatedArray = [...prev.gameBoard];
       const clickedCard = updatedArray[index];
@@ -157,10 +181,11 @@ export default function App() {
       } else {
         clickedCard.clicked = true;
         updatedClickedCards.push(clickedCard);
-        shuffle(updatedArray);
 
         // Play the Pokemon's cry sound for successful click
         soundManager.playPokemonSound(clickedCard.name);
+
+        shuffle(updatedArray);
 
         if (prev.currentScore >= prev.highScore) {
           return {
@@ -197,6 +222,16 @@ export default function App() {
     }
   };
 
+  // Message for loading state
+  const getLoadingMessage = () => {
+    if (game.isLoading) {
+      return 'Loading Pokémon...';
+    } else if (!game.soundsLoaded) {
+      return 'Preloading sounds...';
+    }
+    return '';
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header
@@ -207,11 +242,11 @@ export default function App() {
       />
 
       <div className="flex-1 flex flex-col items-center justify-center">
-        {game.isLoading ? (
+        {game.isLoading || !game.soundsLoaded ? (
           <div className="flex flex-col items-center justify-center p-10">
             <div className="w-12 h-12 border-4 border-sky-600 border-t-transparent rounded-full animate-spin"></div>
             <p className="mt-4 text-lg text-sky-800 font-medium">
-              Loading Pokémon...
+              {getLoadingMessage()}
             </p>
           </div>
         ) : (
@@ -240,6 +275,7 @@ export default function App() {
         result={game.gameResult}
         onPlayAgain={startNewGame}
         onChangeDifficulty={handleDifficultyChange}
+        currentDifficulty={game.difficultyLevel}
       />
 
       <SoundToggle />

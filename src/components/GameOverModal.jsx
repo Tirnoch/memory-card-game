@@ -7,6 +7,7 @@ const GameOverModal = ({
   result,
   onPlayAgain,
   onChangeDifficulty,
+  currentDifficulty,
 }) => {
   if (!isVisible) return null;
 
@@ -52,6 +53,7 @@ const GameOverModal = ({
               <span className="text-gray-600">Difficulty:</span>
               <select
                 className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-300"
+                value={currentDifficulty}
                 onChange={(e) => onChangeDifficulty(e.target.value)}
               >
                 <option value="easy">Easy</option>
@@ -73,6 +75,7 @@ GameOverModal.propTypes = {
   result: PropTypes.oneOf(['win', 'lose']).isRequired,
   onPlayAgain: PropTypes.func.isRequired,
   onChangeDifficulty: PropTypes.func.isRequired,
+  currentDifficulty: PropTypes.string.isRequired,
 };
 
 export default GameOverModal;
