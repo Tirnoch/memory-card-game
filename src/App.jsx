@@ -10,6 +10,7 @@ export default function App() {
     currentScore: 0,
     highScore: parseInt(localStorage.getItem('highScore')) || 0,
     gameBoard: [...URL_ARRAY],
+    lastClickResult: null, // Track the result of the last click (success, error, null)
   });
 
   // Save high score to localStorage whenever it changes
@@ -17,11 +18,26 @@ export default function App() {
     localStorage.setItem('highScore', game.highScore.toString());
   }, [game.highScore]);
 
+  // Reset feedback after a short delay
+  useEffect(() => {
+    if (game.lastClickResult) {
+      const timer = setTimeout(() => {
+        setGame((prev) => ({
+          ...prev,
+          lastClickResult: null,
+        }));
+      }, 700); // Reset after 700ms
+
+      return () => clearTimeout(timer);
+    }
+  }, [game.lastClickResult]);
+
   const handleClick = (index) => {
     setGame((prev) => {
       const updatedArray = [...prev.gameBoard];
       const clickedCard = updatedArray[index];
       const updatedClickedCards = [...prev.clickedCards];
+
       //Game Restart
       if (updatedClickedCards.find((newClick) => newClick == clickedCard)) {
         shuffle(updatedArray);
@@ -30,13 +46,13 @@ export default function App() {
           gameBoard: updatedArray,
           currentScore: 0,
           clickedCards: [],
+          lastClickResult: 'error', // Indicate error on duplicate click
         };
       } else {
         clickedCard.clicked = true;
-
         updatedClickedCards.push(clickedCard);
-
         shuffle(updatedArray);
+
         if (game.currentScore >= game.highScore) {
           return {
             ...prev,
@@ -44,6 +60,7 @@ export default function App() {
             currentScore: updatedClickedCards.length,
             highScore: updatedClickedCards.length,
             clickedCards: [...updatedClickedCards],
+            lastClickResult: 'success', // Indicate successful click
           };
         } else
           return {
@@ -51,6 +68,7 @@ export default function App() {
             gameBoard: updatedArray,
             currentScore: updatedClickedCards.length,
             clickedCards: [...updatedClickedCards],
+            lastClickResult: 'success', // Indicate successful click
           };
       }
     });
@@ -70,6 +88,7 @@ export default function App() {
             name={card.name}
             id={card.id}
             handleClick={() => handleClick(index)}
+            feedbackStatus={game.lastClickResult}
           />
         ))}
       </div>
