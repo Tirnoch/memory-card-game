@@ -179,16 +179,16 @@ export default function App() {
 
   // Play error sounds when a bad click happens (user clicked same card twice)
   const playBadClickSounds = (pokemonName) => {
-    // Immediate error sound
-    soundManager.play('error');
+    // Play all sounds directly to ensure they work
+    soundManager.play('error', true);
 
-    // Pokemon-specific defeat sound
+    // Immediate error sound
     soundManager.playPokemonSound(pokemonName, true);
 
-    // Delayed lose sound
+    // Ensure lose sound plays regardless of what else happens
     setTimeout(() => {
-      soundManager.play('lose');
-    }, 500);
+      soundManager.play('lose', true);
+    }, 300);
   };
 
   const handleClick = (index) => {

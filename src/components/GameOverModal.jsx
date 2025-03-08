@@ -1,4 +1,6 @@
 import PropTypes from 'prop-types';
+import soundManager from './SoundManager';
+import { useEffect } from 'react';
 
 const GameOverModal = ({
   isVisible,
@@ -9,9 +11,29 @@ const GameOverModal = ({
   onChangeDifficulty,
   currentDifficulty,
 }) => {
+  // Play appropriate sound when modal becomes visible
+  useEffect(() => {
+    if (isVisible) {
+      // Use a short timeout to ensure the sound plays after any other sounds
+      setTimeout(() => {
+        soundManager.play(result === 'win' ? 'win' : 'lose');
+      }, 100);
+    }
+  }, [isVisible, result]);
+
   if (!isVisible) return null;
 
   const isWin = result === 'win';
+
+  const handlePlayAgain = () => {
+    soundManager.play('click');
+    onPlayAgain();
+  };
+
+  const handleDifficultyChange = (e) => {
+    soundManager.play('click');
+    onChangeDifficulty(e.target.value);
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -43,7 +65,7 @@ const GameOverModal = ({
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
-              onClick={onPlayAgain}
+              onClick={handlePlayAgain}
               className="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-medium transition-colors"
             >
               Play Again
@@ -54,7 +76,7 @@ const GameOverModal = ({
               <select
                 className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-300"
                 value={currentDifficulty}
-                onChange={(e) => onChangeDifficulty(e.target.value)}
+                onChange={handleDifficultyChange}
               >
                 <option value="easy">Easy</option>
                 <option value="medium">Medium</option>

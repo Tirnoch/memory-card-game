@@ -19,24 +19,50 @@ class SoundManager {
 
     // Set volume for all sounds
     this.setVolume(0.4);
+
+    // Preload sounds to ensure they're ready
+    this.preload();
   }
 
   /**
    * Play a sound effect
    * @param {string} soundName - Name of the sound to play
+   * @param {boolean} forceFallback - Whether to force using a fallback if primary sound fails
    */
-  play(soundName) {
+  play(soundName, forceFallback = true) {
     if (this.isMuted || !this.sounds[soundName]) return;
 
     try {
       // Stop and reset the sound before playing
       const sound = this.sounds[soundName];
       sound.currentTime = 0;
-      sound.play().catch((error) => {
-        console.warn(`Error playing sound ${soundName}:`, error);
-      });
+
+      // Play with error handling
+      const playPromise = sound.play();
+
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.warn(`Error playing sound ${soundName}:`, error);
+
+          // Try fallback for common sounds if enabled
+          if (forceFallback) {
+            // If win/lose fails, try click as fallback
+            if (
+              soundName === 'win' ||
+              soundName === 'lose' ||
+              soundName === 'error'
+            ) {
+              this.play('click', false); // Prevent infinite recursion
+            }
+          }
+        });
+      }
     } catch (error) {
       console.error(`Error playing sound ${soundName}:`, error);
+      // Try fallback
+      if (forceFallback && soundName !== 'click') {
+        this.play('click', false); // Prevent infinite recursion
+      }
     }
   }
 
@@ -49,30 +75,38 @@ class SoundManager {
     if (this.isMuted) return;
 
     try {
+      // First play a fallback sound immediately for instant feedback
+      this.play(isDefeatSound ? 'error' : 'success', false);
+
       // Check if we already have this sound cached
       const cacheKey = `${pokemonName}-${isDefeatSound ? 'defeat' : 'cry'}`;
 
+      // If the sound isn't cached, don't wait - we already played the fallback
       if (!this.pokemonSoundCache[cacheKey]) {
-        // No cached sound - load with fallback
-        this.play(isDefeatSound ? 'lose' : 'success'); // Play appropriate fallback sound
-
-        // Also attempt to fetch the Pokemon sound for next time
-        this.loadPokemonSound(pokemonName, isDefeatSound);
+        // Try to load it in the background for next time
+        this.loadPokemonSound(pokemonName, isDefeatSound).catch(() => {
+          /* Ignore errors - fallback already played */
+        });
         return;
       }
 
-      // Play the sound from cache
+      // We have the sound cached, try to play it
       const sound = this.pokemonSoundCache[cacheKey];
       sound.currentTime = 0;
-      sound.play().catch((error) => {
-        console.warn(`Error playing Pokemon sound for ${pokemonName}:`, error);
-        // Fallback to regular sounds
-        this.play(isDefeatSound ? 'lose' : 'success');
-      });
+
+      const playPromise = sound.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.warn(
+            `Error playing Pokemon sound for ${pokemonName}:`,
+            error
+          );
+          // Fallback already played at start, no need for another one
+        });
+      }
     } catch (error) {
       console.error(`Error playing Pokemon sound for ${pokemonName}:`, error);
-      // Fallback to regular sounds
-      this.play(isDefeatSound ? 'lose' : 'success');
+      // Fallback already played at start, no need for another one
     }
   }
 
