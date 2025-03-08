@@ -1,11 +1,32 @@
 /**
+ * Get the number of cards based on difficulty level
+ * @param {string} difficulty - Difficulty level (easy, medium, hard)
+ * @returns {number} - Number of cards for the selected difficulty
+ */
+export function getCardCountByDifficulty(difficulty = 'medium') {
+  switch (difficulty) {
+    case 'easy':
+      return 8;
+    case 'medium':
+      return 12;
+    case 'hard':
+      return 16;
+    default:
+      return 12;
+  }
+}
+
+/**
  * Fetches a list of Pokemon with detailed information including sprites
- * @param {number} limit - Number of Pokemon to fetch (default: 12)
+ * @param {string} difficulty - Difficulty level (easy, medium, hard)
  * @param {number} offset - Starting index for fetching Pokemon (default: random offset)
  * @returns {Promise<Array>} - Array of Pokemon objects with name, url, and sprite URLs
  */
-export async function fetchPokemonData(limit = 12, offset = null) {
+export async function fetchPokemonData(difficulty = 'medium', offset = null) {
   try {
+    // Get number of cards based on difficulty
+    const limit = getCardCountByDifficulty(difficulty);
+
     // Generate a random offset between 1 and 800 if not provided
     // This ensures we get different Pokemon each time
     const randomOffset =
@@ -53,6 +74,9 @@ export async function fetchPokemonData(limit = 12, offset = null) {
     return await Promise.all(detailedPokemonPromises);
   } catch (error) {
     console.error('Error fetching Pokemon data:', error);
+
+    // Get fallback count based on difficulty
+    const limit = getCardCountByDifficulty(difficulty);
 
     // Fallback to generate placeholder data if the API is down
     return Array.from({ length: limit }, (_, i) => ({

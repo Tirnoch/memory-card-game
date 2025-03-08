@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import Header from './components/Header';
 import shuffle from './components/shuffle';
 import Card from './components/Card';
-import { fetchPokemonData } from './components/fetchAPI';
+import {
+  fetchPokemonData,
+  getCardCountByDifficulty,
+} from './components/fetchAPI';
 
 export default function App() {
   const [game, setGame] = useState({
@@ -12,14 +15,15 @@ export default function App() {
     gameBoard: [],
     lastClickResult: null, // Track the result of the last click (success, error, null)
     isLoading: true,
+    difficultyLevel: localStorage.getItem('difficultyLevel') || 'medium',
   });
 
-  // Fetch Pokemon data on initial component mount
+  // Fetch Pokemon data on initial component mount or when difficulty changes
   useEffect(() => {
     const loadPokemonData = async () => {
       try {
         setGame((prev) => ({ ...prev, isLoading: true }));
-        const pokemonData = await fetchPokemonData();
+        const pokemonData = await fetchPokemonData(game.difficultyLevel);
 
         setGame((prev) => ({
           ...prev,
@@ -33,12 +37,13 @@ export default function App() {
     };
 
     loadPokemonData();
-  }, []);
+  }, [game.difficultyLevel]);
 
-  // Save high score to localStorage whenever it changes
+  // Save high score and difficulty to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('highScore', game.highScore.toString());
-  }, [game.highScore]);
+    localStorage.setItem('difficultyLevel', game.difficultyLevel);
+  }, [game.highScore, game.difficultyLevel]);
 
   // Reset feedback after a short delay
   useEffect(() => {
@@ -54,6 +59,18 @@ export default function App() {
     }
   }, [game.lastClickResult]);
 
+  // Handle difficulty change
+  const handleDifficultyChange = (newDifficulty) => {
+    if (newDifficulty !== game.difficultyLevel) {
+      setGame((prev) => ({
+        ...prev,
+        difficultyLevel: newDifficulty,
+        clickedCards: [],
+        currentScore: 0,
+      }));
+    }
+  };
+
   // Start a new game by fetching new Pokemon
   const startNewGame = async () => {
     try {
@@ -64,7 +81,7 @@ export default function App() {
         currentScore: 0,
       }));
 
-      const newPokemonData = await fetchPokemonData();
+      const newPokemonData = await fetchPokemonData(game.difficultyLevel);
 
       setGame((prev) => ({
         ...prev,
@@ -106,7 +123,7 @@ export default function App() {
         updatedClickedCards.push(clickedCard);
         shuffle(updatedArray);
 
-        if (game.currentScore >= game.highScore) {
+        if (prev.currentScore >= prev.highScore) {
           return {
             ...prev,
             gameBoard: updatedArray,
@@ -127,9 +144,28 @@ export default function App() {
     });
   };
 
+  // Get the appropriate grid classes based on difficulty
+  const getGridClasses = () => {
+    switch (game.difficultyLevel) {
+      case 'easy':
+        return 'grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4';
+      case 'medium':
+        return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4';
+      case 'hard':
+        return 'grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4';
+      default:
+        return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4';
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      <Header highScore={game.highScore} currentScore={game.currentScore} />
+      <Header
+        highScore={game.highScore}
+        currentScore={game.currentScore}
+        difficultyLevel={game.difficultyLevel}
+        onChangeDifficulty={handleDifficultyChange}
+      />
 
       <div className="flex-1 flex flex-col items-center justify-center">
         {game.isLoading ? (
@@ -142,7 +178,7 @@ export default function App() {
         ) : (
           <div
             id="gameBoard"
-            className="flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-6 md:gap-8 p-4 sm:p-6 md:p-10 justify-items-center content-start mx-auto w-full max-w-7xl"
+            className={`flex-1 grid ${getGridClasses()} gap-3 sm:gap-6 md:gap-8 p-4 sm:p-6 md:p-10 justify-items-center content-start mx-auto w-full max-w-7xl`}
           >
             {game.gameBoard.map((card, index) => (
               <Card
