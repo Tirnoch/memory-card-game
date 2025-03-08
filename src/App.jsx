@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import Header from './components/Header';
 import shuffle from './components/shuffle';
 import URL_ARRAY from './components/URL_ARRAY';
@@ -8,9 +8,14 @@ export default function App() {
   const [game, setGame] = useState({
     clickedCards: [],
     currentScore: 0,
-    highScore: 0,
+    highScore: parseInt(localStorage.getItem('highScore')) || 0,
     gameBoard: [...URL_ARRAY],
   });
+
+  // Save high score to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('highScore', game.highScore.toString());
+  }, [game.highScore]);
 
   const handleClick = (index) => {
     setGame((prev) => {
