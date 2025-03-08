@@ -179,16 +179,19 @@ export default function App() {
 
   // Play error sounds when a bad click happens (user clicked same card twice)
   const playBadClickSounds = (pokemonName) => {
-    // Play all sounds directly to ensure they work
+    // First play the immediate error sound
     soundManager.play('error', true);
 
-    // Immediate error sound
-    soundManager.playPokemonSound(pokemonName, true);
-
-    // Ensure lose sound plays regardless of what else happens
+    // Delay the game over state to allow Pokemon sounds to play fully
     setTimeout(() => {
-      soundManager.play('lose', true);
-    }, 300);
+      // Play Pokemon-specific defeat sound
+      soundManager.playPokemonSound(pokemonName, true);
+
+      // Further delay the final lose sound to let the Pokemon cry finish
+      setTimeout(() => {
+        soundManager.play('lose', true);
+      }, 800); // Longer delay to ensure we hear the Pokemon sound
+    }, 200);
   };
 
   const handleClick = (index) => {
@@ -208,16 +211,23 @@ export default function App() {
       // Shuffle the array
       shuffle(updatedArray);
 
-      // Now update state to show game over
+      // First update the visuals for error feedback
       setGame((prev) => ({
         ...prev,
         gameBoard: updatedArray,
         currentScore: 0,
         clickedCards: [],
         lastClickResult: 'error',
-        showGameOver: true,
-        gameResult: 'lose',
       }));
+
+      // Delay showing the game over screen to give time for sounds to play
+      setTimeout(() => {
+        setGame((prev) => ({
+          ...prev,
+          showGameOver: true,
+          gameResult: 'lose',
+        }));
+      }, 1200); // Delay showing game over screen until after sounds
     } else {
       // Good click - selecting a new card
       clickedCard.clicked = true;

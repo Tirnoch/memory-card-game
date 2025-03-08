@@ -20,10 +20,7 @@ const Card = ({ url, name, handleClick, feedbackStatus }) => {
     const baseClasses =
       'rounded-xl border-2 relative w-full aspect-square flex flex-col items-center justify-center transition-all duration-300';
 
-    if (feedbackStatus === 'success') {
-      // No special animation for success, just color change
-      return `${baseClasses} border-green-500 bg-green-100 shadow-md`;
-    } else if (feedbackStatus === 'error') {
+    if (feedbackStatus === 'error') {
       // Enhanced error animation
       return `${baseClasses} border-red-500 bg-red-100 shadow-lg shadow-red-300 ${
         isAnimating ? 'animate-shake scale-105' : ''
@@ -42,11 +39,7 @@ const Card = ({ url, name, handleClick, feedbackStatus }) => {
     <button className={getFeedbackClass()} onClick={handleCardClick}>
       <p
         className={`text-center font-medium text-xs sm:text-sm md:text-base w-full px-1 truncate ${
-          feedbackStatus === 'success'
-            ? 'text-green-700'
-            : feedbackStatus === 'error'
-            ? 'text-red-700 font-bold'
-            : ''
+          feedbackStatus === 'error' ? 'text-red-700 font-bold' : ''
         }`}
       >
         {name}
