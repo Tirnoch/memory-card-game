@@ -6,6 +6,7 @@ import {
   fetchPokemonData,
   getCardCountByDifficulty,
 } from './components/fetchAPI';
+import GameOverModal from './components/GameOverModal';
 
 export default function App() {
   const [game, setGame] = useState({
@@ -16,6 +17,8 @@ export default function App() {
     lastClickResult: null, // Track the result of the last click (success, error, null)
     isLoading: true,
     difficultyLevel: localStorage.getItem('difficultyLevel') || 'medium',
+    showGameOver: false,
+    gameResult: null, // 'win' or 'lose'
   });
 
   // Fetch Pokemon data on initial component mount or when difficulty changes
@@ -59,6 +62,20 @@ export default function App() {
     }
   }, [game.lastClickResult]);
 
+  // Check for win condition
+  useEffect(() => {
+    const cardCount = getCardCountByDifficulty(game.difficultyLevel);
+
+    // If player has clicked all cards without duplicates, they win
+    if (game.currentScore === cardCount) {
+      setGame((prev) => ({
+        ...prev,
+        showGameOver: true,
+        gameResult: 'win',
+      }));
+    }
+  }, [game.currentScore, game.difficultyLevel]);
+
   // Handle difficulty change
   const handleDifficultyChange = (newDifficulty) => {
     if (newDifficulty !== game.difficultyLevel) {
@@ -67,6 +84,7 @@ export default function App() {
         difficultyLevel: newDifficulty,
         clickedCards: [],
         currentScore: 0,
+        showGameOver: false,
       }));
     }
   };
@@ -79,6 +97,7 @@ export default function App() {
         isLoading: true,
         clickedCards: [],
         currentScore: 0,
+        showGameOver: false,
       }));
 
       const newPokemonData = await fetchPokemonData(game.difficultyLevel);
@@ -106,17 +125,15 @@ export default function App() {
       ) {
         shuffle(updatedArray);
 
-        // Start a new game with new Pokemon after a short delay
-        setTimeout(() => {
-          startNewGame();
-        }, 1000);
-
+        // Show game over modal with lose result
         return {
           ...prev,
           gameBoard: updatedArray,
           currentScore: 0,
           clickedCards: [],
           lastClickResult: 'error', // Indicate error on duplicate click
+          showGameOver: true,
+          gameResult: 'lose',
         };
       } else {
         clickedCard.clicked = true;
@@ -193,6 +210,15 @@ export default function App() {
           </div>
         )}
       </div>
+
+      <GameOverModal
+        isVisible={game.showGameOver}
+        score={game.currentScore}
+        maxScore={game.highScore}
+        result={game.gameResult}
+        onPlayAgain={startNewGame}
+        onChangeDifficulty={handleDifficultyChange}
+      />
     </div>
   );
 }
