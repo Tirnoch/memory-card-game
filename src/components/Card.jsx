@@ -2,7 +2,7 @@ const Card = ({ url, name, handleClick, feedbackStatus }) => {
   // Generate the appropriate CSS classes based on feedback status
   const getFeedbackClass = () => {
     const baseClasses =
-      'rounded-xl border-2 relative max-[600px]:w-28 transition-all duration-300';
+      'rounded-xl border-2 relative w-full aspect-square flex flex-col items-center justify-center transition-all duration-300';
 
     if (feedbackStatus === 'success') {
       return `${baseClasses} border-green-500 bg-green-100 shadow-lg shadow-green-200`;
@@ -15,14 +15,8 @@ const Card = ({ url, name, handleClick, feedbackStatus }) => {
 
   return (
     <button className={getFeedbackClass()} onClick={handleClick}>
-      <img
-        src={url}
-        alt={`sprite of a ${name}`}
-        className="p-4"
-        draggable="false"
-      />
       <p
-        className={`text-center absolute top-0 left-8 max-[600px]:left-4 font-medium ${
+        className={`text-center font-medium text-xs sm:text-sm md:text-base w-full px-1 truncate ${
           feedbackStatus === 'success'
             ? 'text-green-700'
             : feedbackStatus === 'error'
@@ -32,6 +26,12 @@ const Card = ({ url, name, handleClick, feedbackStatus }) => {
       >
         {name}
       </p>
+      <img
+        src={url}
+        alt={`sprite of a ${name}`}
+        className="p-2 sm:p-3 md:p-4 h-auto w-auto max-h-[80%] object-contain"
+        draggable="false"
+      />
     </button>
   );
 };

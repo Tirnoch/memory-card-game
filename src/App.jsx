@@ -75,11 +75,11 @@ export default function App() {
   };
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-slate-50">
       <Header highScore={game.highScore} currentScore={game.currentScore} />
       <div
         id="gameBoard"
-        className="grid grid-rows-auto grid-cols-3 gap-10 pt-10 px-10 justify-items-center"
+        className="flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-6 md:gap-8 p-4 sm:p-6 md:p-10 justify-items-center content-start mx-auto w-full max-w-7xl"
       >
         {game.gameBoard.map((card, index) => (
           <Card
@@ -92,6 +92,6 @@ export default function App() {
           />
         ))}
       </div>
-    </>
+    </div>
   );
 }
