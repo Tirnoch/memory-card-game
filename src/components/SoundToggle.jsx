@@ -1,10 +1,16 @@
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 import soundManager from './SoundManager';
 
-const SoundToggle = () => {
+const SoundToggle = ({ isDisabled }) => {
   const [isMuted, setIsMuted] = useState(soundManager.getMuteStatus());
 
-  const toggleSound = () => {
+  const toggleSound = (e) => {
+    if (isDisabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     const newMuteStatus = soundManager.toggleMute();
     setIsMuted(newMuteStatus);
   };
@@ -12,9 +18,13 @@ const SoundToggle = () => {
   return (
     <button
       onClick={toggleSound}
-      className="fixed bottom-4 right-4 z-50 p-3 bg-sky-700 hover:bg-sky-800 text-white rounded-full shadow-md transition-colors"
+      className={`fixed bottom-4 right-4 z-40 p-3 bg-sky-700 hover:bg-sky-800 text-white rounded-full shadow-md transition-colors ${
+        isDisabled ? 'opacity-50 cursor-not-allowed' : ''
+      }`}
       aria-label={isMuted ? 'Unmute game sounds' : 'Mute game sounds'}
       title={isMuted ? 'Unmute game sounds' : 'Mute game sounds'}
+      disabled={isDisabled}
+      aria-disabled={isDisabled}
     >
       {isMuted ? (
         // Muted icon
@@ -57,6 +67,14 @@ const SoundToggle = () => {
       )}
     </button>
   );
+};
+
+SoundToggle.propTypes = {
+  isDisabled: PropTypes.bool,
+};
+
+SoundToggle.defaultProps = {
+  isDisabled: false,
 };
 
 export default SoundToggle;

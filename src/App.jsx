@@ -400,7 +400,41 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-slate-50 overflow-hidden relative">
+      {/* Full page overlay that blocks all UI interaction when game is locked */}
+      {(GAME_LOCKED || game.isGameLocked) && (
+        <div
+          className="fixed inset-0 z-[100] bg-black bg-opacity-5"
+          style={{
+            pointerEvents: 'all',
+            cursor: 'not-allowed',
+            touchAction: 'none',
+            userSelect: 'none',
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }}
+          onKeyDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }}
+          aria-hidden="true"
+        />
+      )}
+
       <Header
         highScore={game.highScore}
         currentScore={game.currentScore}
@@ -447,7 +481,9 @@ export default function App() {
 
             <div
               id="gameBoard"
-              className={`flex-1 grid ${getGridClasses()} gap-3 sm:gap-6 md:gap-8 p-4 sm:p-6 md:p-10 justify-items-center content-start mx-auto w-full max-w-7xl`}
+              className={`flex-1 grid ${getGridClasses()} gap-3 sm:gap-6 md:gap-8 p-4 sm:p-6 md:p-10 justify-items-center content-start mx-auto w-full max-w-7xl ${
+                GAME_LOCKED ? 'pointer-events-none' : ''
+              }`}
             >
               {game.gameBoard.map((card, index) => (
                 <Card
@@ -477,7 +513,9 @@ export default function App() {
         currentDifficulty={game.pendingDifficulty || game.difficultyLevel}
       />
 
-      <SoundToggle />
+      <SoundToggle
+        isDisabled={GAME_LOCKED || game.isGameLocked || game.transitionLock}
+      />
     </div>
   );
 }
