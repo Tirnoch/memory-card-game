@@ -101,7 +101,7 @@ export default function App() {
     }
   }, [game.currentScore, game.difficultyLevel]);
 
-  // Handle difficulty change
+  // Handle difficulty change during active gameplay (from header)
   const handleDifficultyChange = (newDifficulty) => {
     if (newDifficulty !== game.difficultyLevel) {
       soundManager.play('click');
@@ -111,6 +111,17 @@ export default function App() {
         clickedCards: [],
         currentScore: 0,
         showGameOver: false,
+      }));
+    }
+  };
+
+  // Handle difficulty change in game over modal (just stores the selection)
+  const handleGameOverDifficultyChange = (newDifficulty) => {
+    if (newDifficulty !== game.difficultyLevel) {
+      soundManager.play('click');
+      setGame((prev) => ({
+        ...prev,
+        difficultyLevel: newDifficulty,
       }));
     }
   };
@@ -274,7 +285,7 @@ export default function App() {
         maxScore={game.highScore}
         result={game.gameResult}
         onPlayAgain={startNewGame}
-        onChangeDifficulty={handleDifficultyChange}
+        onChangeDifficulty={handleGameOverDifficultyChange}
         currentDifficulty={game.difficultyLevel}
       />
 

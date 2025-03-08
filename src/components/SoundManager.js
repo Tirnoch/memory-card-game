@@ -5,6 +5,7 @@ class SoundManager {
   constructor() {
     this.sounds = {
       click: new Audio('/sounds/click.mp3'),
+      success: new Audio('/sounds/click.mp3'), // Reuse click sound as success
       win: new Audio('/sounds/win.mp3'),
       lose: new Audio('/sounds/lose.mp3'),
     };
@@ -52,7 +53,7 @@ class SoundManager {
 
       if (!this.pokemonSoundCache[cacheKey]) {
         // No cached sound - load with fallback
-        this.play(isDefeatSound ? 'lose' : 'click'); // Play basic sound immediately
+        this.play(isDefeatSound ? 'lose' : 'success'); // Play appropriate fallback sound
 
         // Also attempt to fetch the Pokemon sound for next time
         this.loadPokemonSound(pokemonName, isDefeatSound);
@@ -65,12 +66,12 @@ class SoundManager {
       sound.play().catch((error) => {
         console.warn(`Error playing Pokemon sound for ${pokemonName}:`, error);
         // Fallback to regular sounds
-        this.play(isDefeatSound ? 'lose' : 'click');
+        this.play(isDefeatSound ? 'lose' : 'success');
       });
     } catch (error) {
       console.error(`Error playing Pokemon sound for ${pokemonName}:`, error);
       // Fallback to regular sounds
-      this.play(isDefeatSound ? 'lose' : 'click');
+      this.play(isDefeatSound ? 'lose' : 'success');
     }
   }
 
@@ -122,14 +123,20 @@ class SoundManager {
         audio.playbackRate = 0.7; // Slow down for defeat sound
         audio.volume = this.sounds.lose.volume * 0.7;
       } else {
-        audio.volume = this.sounds.click.volume;
+        audio.volume = this.sounds.success.volume;
       }
 
       // Wait for the audio to be loadable
       return new Promise((resolve, reject) => {
+        // Set a timeout to avoid hanging forever
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Sound loading timed out'));
+        }, 5000); // 5 second timeout
+
         audio.addEventListener(
           'canplaythrough',
           () => {
+            clearTimeout(timeoutId);
             this.pokemonSoundCache[cacheKey] = audio;
             resolve(audio);
           },
@@ -139,6 +146,7 @@ class SoundManager {
         audio.addEventListener(
           'error',
           (e) => {
+            clearTimeout(timeoutId);
             console.warn(`Failed to load Pokemon sound for ${pokemonName}:`, e);
             reject(e);
           },
