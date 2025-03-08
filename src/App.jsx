@@ -137,8 +137,9 @@ export default function App() {
       if (
         updatedClickedCards.find((newClick) => newClick.id === clickedCard.id)
       ) {
-        // Play error sound for duplicate click
-        soundManager.play('error');
+        // Play defeat sound for the duplicate clicked Pokemon
+        soundManager.playPokemonSound(clickedCard.name, true);
+
         setTimeout(() => soundManager.play('lose'), 500);
 
         shuffle(updatedArray);
@@ -158,8 +159,8 @@ export default function App() {
         updatedClickedCards.push(clickedCard);
         shuffle(updatedArray);
 
-        // Play success sound for new card
-        soundManager.play('success');
+        // Play the Pokemon's cry sound for successful click
+        soundManager.playPokemonSound(clickedCard.name);
 
         if (prev.currentScore >= prev.highScore) {
           return {
