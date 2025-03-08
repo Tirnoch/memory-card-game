@@ -48,15 +48,18 @@ export default function App() {
     localStorage.setItem('difficultyLevel', game.difficultyLevel);
   }, [game.highScore, game.difficultyLevel]);
 
-  // Reset feedback after a short delay
+  // Reset feedback after a short delay - make error feedback shorter
   useEffect(() => {
     if (game.lastClickResult) {
-      const timer = setTimeout(() => {
-        setGame((prev) => ({
-          ...prev,
-          lastClickResult: null,
-        }));
-      }, 700); // Reset after 700ms
+      const timer = setTimeout(
+        () => {
+          setGame((prev) => ({
+            ...prev,
+            lastClickResult: null,
+          }));
+        },
+        game.lastClickResult === 'error' ? 400 : 700
+      ); // Shorter time for error feedback
 
       return () => clearTimeout(timer);
     }
