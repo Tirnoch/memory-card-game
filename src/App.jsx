@@ -129,14 +129,12 @@ export default function App() {
 
   // Handle difficulty change in game over modal (just stores the selection)
   const handleGameOverDifficultyChange = (newDifficulty) => {
-    if (newDifficulty !== game.difficultyLevel) {
-      soundManager.play('click');
-      // Store the selection as pending, to be applied when the game restarts
-      setGame((prev) => ({
-        ...prev,
-        pendingDifficulty: newDifficulty,
-      }));
-    }
+    // Always play click sound and update pendingDifficulty, even if same as current
+    soundManager.play('click');
+    setGame((prev) => ({
+      ...prev,
+      pendingDifficulty: newDifficulty,
+    }));
   };
 
   // Start a new game by fetching new Pokemon
@@ -179,45 +177,60 @@ export default function App() {
     }
   };
 
+  // Play error sounds when a bad click happens (user clicked same card twice)
+  const playBadClickSounds = (pokemonName) => {
+    // Immediate error sound
+    soundManager.play('error');
+
+    // Pokemon-specific defeat sound
+    soundManager.playPokemonSound(pokemonName, true);
+
+    // Delayed lose sound
+    setTimeout(() => {
+      soundManager.play('lose');
+    }, 500);
+  };
+
   const handleClick = (index) => {
     soundManager.play('click');
 
-    setGame((prev) => {
-      const updatedArray = [...prev.gameBoard];
-      const clickedCard = updatedArray[index];
-      const updatedClickedCards = [...prev.clickedCards];
+    const updatedArray = [...game.gameBoard];
+    const clickedCard = updatedArray[index];
+    const updatedClickedCards = [...game.clickedCards];
 
-      //Game Restart - when clicking the same card twice (bad click)
-      if (
-        updatedClickedCards.find((newClick) => newClick.id === clickedCard.id)
-      ) {
-        // Play error sounds - first the Pokemon defeat sound, then the general lose sound
-        soundManager.play('error'); // Immediate feedback
-        soundManager.playPokemonSound(clickedCard.name, true); // Pokemon defeat sound
-        setTimeout(() => soundManager.play('lose'), 500); // Lose sound after delay
+    // Check if this is a duplicate click (bad click)
+    if (
+      updatedClickedCards.find((newClick) => newClick.id === clickedCard.id)
+    ) {
+      // Play error sounds BEFORE updating state
+      playBadClickSounds(clickedCard.name);
 
-        shuffle(updatedArray);
+      // Shuffle the array
+      shuffle(updatedArray);
 
-        // Show game over modal with lose result
-        return {
-          ...prev,
-          gameBoard: updatedArray,
-          currentScore: 0,
-          clickedCards: [],
-          lastClickResult: 'error', // Indicate error on duplicate click
-          showGameOver: true,
-          gameResult: 'lose',
-        };
-      } else {
-        // Good click - selecting a new card
-        clickedCard.clicked = true;
-        updatedClickedCards.push(clickedCard);
+      // Now update state to show game over
+      setGame((prev) => ({
+        ...prev,
+        gameBoard: updatedArray,
+        currentScore: 0,
+        clickedCards: [],
+        lastClickResult: 'error',
+        showGameOver: true,
+        gameResult: 'lose',
+      }));
+    } else {
+      // Good click - selecting a new card
+      clickedCard.clicked = true;
+      updatedClickedCards.push(clickedCard);
 
-        // Play the Pokemon's cry sound for successful click
-        soundManager.playPokemonSound(clickedCard.name);
+      // Play the Pokemon's cry sound for successful click
+      soundManager.playPokemonSound(clickedCard.name);
 
-        shuffle(updatedArray);
+      // Shuffle the array
+      shuffle(updatedArray);
 
+      // Update state
+      setGame((prev) => {
         if (prev.currentScore >= prev.highScore) {
           return {
             ...prev,
@@ -225,18 +238,19 @@ export default function App() {
             currentScore: updatedClickedCards.length,
             highScore: updatedClickedCards.length,
             clickedCards: [...updatedClickedCards],
-            lastClickResult: 'success', // Indicate successful click
+            lastClickResult: 'success',
           };
-        } else
+        } else {
           return {
             ...prev,
             gameBoard: updatedArray,
             currentScore: updatedClickedCards.length,
             clickedCards: [...updatedClickedCards],
-            lastClickResult: 'success', // Indicate successful click
+            lastClickResult: 'success',
           };
-      }
-    });
+        }
+      });
+    }
   };
 
   // Get the appropriate grid classes based on difficulty
