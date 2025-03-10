@@ -1,8 +1,9 @@
 import PropTypes from 'prop-types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 
 const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Set animation when feedback status changes, but only for error
   useEffect(() => {
@@ -17,8 +18,9 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
 
   // Generate the appropriate CSS classes based on feedback status
   const getFeedbackClass = () => {
-    const baseClasses =
-      'rounded-xl border-2 relative w-full aspect-square flex flex-col items-center justify-center transition-all duration-300';
+    const baseClasses = `rounded-xl border-2 relative w-full aspect-square flex flex-col items-center justify-center transition-all duration-300 ${
+      isHovered && !isDisabled ? 'float-animation' : ''
+    }`;
 
     // First decide on disabled state
     const disabledClasses = isDisabled
@@ -34,8 +36,12 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
       return `${baseClasses} ${
         isDisabled
           ? disabledClasses
-          : 'hover:bg-slate-300 active:bg-slate-200 hover:shadow-md hover:scale-105'
-      } border-stone-600`;
+          : 'hover:bg-slate-300 hover:border-sky-400 active:bg-slate-200 hover:shadow-md hover:scale-105 focus:ring-2 focus:ring-sky-500 focus:outline-none'
+      } border-stone-600 ${
+        isHovered && !isDisabled
+          ? 'bg-slate-100 scale-105 shadow-md border-sky-400'
+          : 'bg-white'
+      }`;
     }
   };
 
@@ -49,24 +55,84 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
     handleClick();
   };
 
+  // Handle keyboard interactions for accessibility
+  const handleKeyDown = (e) => {
+    if (isDisabled) return;
+
+    // Activate on Enter or Space
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault(); // Prevent scrolling on Space
+      handleClick();
+    }
+  };
+
+  // Handle hover events
+  const handleMouseEnter = () => {
+    if (!isDisabled) {
+      setIsHovered(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+
+  // Determine appropriate ARIA attributes based on card state
+  const getAriaAttributes = () => {
+    let description = `Pokemon ${name}. Click to select this card.`;
+
+    if (feedbackStatus === 'error') {
+      description = `Pokemon ${name}. Error, this card was already selected.`;
+    } else if (isDisabled) {
+      description = `Pokemon ${name}. Card is currently disabled.`;
+    }
+
+    const descId = `description-${name.replace(/\s+/g, '-')}`;
+
+    return {
+      'aria-label': `Pokemon ${name}`,
+      'aria-disabled': isDisabled,
+      'aria-pressed': feedbackStatus === 'success',
+      role: 'button',
+      'aria-describedby': descId,
+      tabIndex: isDisabled ? -1 : 0,
+      descId: descId,
+      description: description,
+    };
+  };
+
+  const ariaAttributes = getAriaAttributes();
+  const { descId, description, ...restAriaAttributes } = ariaAttributes;
+
   return (
     <button
       className={getFeedbackClass()}
       onClick={handleCardClick}
+      onKeyDown={handleKeyDown}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       disabled={isDisabled}
-      aria-disabled={isDisabled}
+      {...restAriaAttributes}
     >
+      <span id={descId} className="sr-only">
+        {description}
+      </span>
+
       <p
-        className={`text-center font-medium text-xs sm:text-sm md:text-base w-full px-1 truncate ${
-          feedbackStatus === 'error' ? 'text-red-700 font-bold' : ''
+        className={`text-center font-medium text-xs sm:text-sm md:text-base w-full px-1 truncate capitalize ${
+          feedbackStatus === 'error'
+            ? 'text-red-700 font-bold'
+            : isHovered && !isDisabled
+            ? 'text-sky-700'
+            : ''
         }`}
       >
         {name}
       </p>
       <img
         src={url}
-        alt={`sprite of a ${name}`}
-        className={`p-2 sm:p-3 md:p-4 h-auto w-auto max-h-[80%] object-contain ${
+        alt={`sprite of Pokemon ${name}`}
+        className={`p-2 sm:p-3 md:p-4 h-auto w-auto max-h-[80%] object-contain transition-transform ${
           feedbackStatus === 'error' && isAnimating
             ? 'animate-[wiggle_0.2s_ease_3]'
             : isDisabled
@@ -91,4 +157,5 @@ Card.defaultProps = {
   isDisabled: false,
 };
 
-export default Card;
+// Optimize with memo to prevent unnecessary re-renders
+export default memo(Card);
