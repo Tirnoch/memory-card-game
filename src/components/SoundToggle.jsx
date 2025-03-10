@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import PropTypes from 'prop-types';
 import soundManager from './SoundManager';
 
@@ -77,4 +77,5 @@ SoundToggle.defaultProps = {
   isDisabled: false,
 };
 
-export default SoundToggle;
+// Optimize with memo to prevent unnecessary re-renders
+export default memo(SoundToggle);

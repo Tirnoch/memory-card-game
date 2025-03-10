@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import Header from './components/Header';
 import shuffle from './components/shuffle';
 import Card from './components/Card';
@@ -165,38 +165,41 @@ export default function App() {
   }, [game.currentScore, game.difficultyLevel]);
 
   // Handle difficulty change during active gameplay (from header)
-  const handleDifficultyChange = (newDifficulty) => {
-    // Check global lock first
-    if (GAME_LOCKED) return;
+  const handleDifficultyChange = useCallback(
+    (newDifficulty) => {
+      // Check global lock first
+      if (GAME_LOCKED) return;
 
-    if (
-      newDifficulty !== game.difficultyLevel &&
-      !game.isGameLocked &&
-      !game.transitionLock
-    ) {
-      soundManager.play('click');
-      setGame((prev) => ({
-        ...prev,
-        difficultyLevel: newDifficulty,
-        clickedCards: [],
-        currentScore: 0,
-        showGameOver: false,
-      }));
-    }
-  };
+      if (
+        newDifficulty !== game.difficultyLevel &&
+        !game.isGameLocked &&
+        !game.transitionLock
+      ) {
+        soundManager.play('click');
+        setGame((prev) => ({
+          ...prev,
+          difficultyLevel: newDifficulty,
+          clickedCards: [],
+          currentScore: 0,
+          showGameOver: false,
+        }));
+      }
+    },
+    [game.difficultyLevel, game.isGameLocked, game.transitionLock]
+  );
 
   // Handle difficulty change in game over modal (just stores the selection)
-  const handleGameOverDifficultyChange = (newDifficulty) => {
+  const handleGameOverDifficultyChange = useCallback((newDifficulty) => {
     // Always play click sound and update pendingDifficulty, even if same as current
     soundManager.play('click');
     setGame((prev) => ({
       ...prev,
       pendingDifficulty: newDifficulty,
     }));
-  };
+  }, []);
 
   // Start a new game by fetching new Pokemon
-  const startNewGame = async () => {
+  const startNewGame = useCallback(async () => {
     soundManager.play('click');
 
     // Reset global lock
@@ -243,10 +246,10 @@ export default function App() {
         }));
       }
     }
-  };
+  }, [game.pendingDifficulty, game.difficultyLevel]);
 
   // Play error sounds when a bad click happens (user clicked same card twice)
-  const playBadClickSounds = (pokemonName) => {
+  const playBadClickSounds = useCallback((pokemonName) => {
     // First play the immediate error sound
     soundManager.play('error', true);
 
@@ -266,117 +269,131 @@ export default function App() {
 
     // Cleanup timers if component unmounts
     return () => clearTimeout(timer1);
-  };
+  }, []);
 
-  // Handle card clicks with lock protection
-  const handleClick = (index) => {
-    // First, check the global lock
-    if (GAME_LOCKED) return;
+  // Create a memoized card click handler generator
+  const createCardClickHandler = useCallback(
+    (index) => {
+      return () => {
+        // First, check the global lock
+        if (GAME_LOCKED) return;
 
-    // Also check React state locks for redundancy
-    if (
-      game.isGameLocked ||
-      game.transitionLock ||
-      game.isLoading ||
-      !game.soundsLoaded
-    ) {
-      return;
-    }
+        // Also check React state locks for redundancy
+        if (
+          game.isGameLocked ||
+          game.transitionLock ||
+          game.isLoading ||
+          !game.soundsLoaded
+        ) {
+          return;
+        }
 
-    soundManager.play('click');
+        soundManager.play('click');
 
-    const updatedArray = [...game.gameBoard];
-    const clickedCard = updatedArray[index];
-    const updatedClickedCards = [...game.clickedCards];
+        const updatedArray = [...game.gameBoard];
+        const clickedCard = updatedArray[index];
+        const updatedClickedCards = [...game.clickedCards];
 
-    // Check if this is a duplicate click (bad click)
-    if (
-      updatedClickedCards.find((newClick) => newClick.id === clickedCard.id)
-    ) {
-      // IMMEDIATELY set global lock before ANY other operation
-      GAME_LOCKED = true;
+        // Check if this is a duplicate click (bad click)
+        if (
+          updatedClickedCards.find((newClick) => newClick.id === clickedCard.id)
+        ) {
+          // IMMEDIATELY set global lock before ANY other operation
+          GAME_LOCKED = true;
 
-      // Save the current score
-      const finalScore = game.currentScore;
+          // Save the current score
+          const finalScore = game.currentScore;
 
-      // Now update React state - won't impact the global lock which is already applied
-      setGame((prev) => ({
-        ...prev,
-        isGameLocked: true,
-        transitionLock: true,
-        lastClickResult: 'error',
-        finalScore: finalScore, // Store the final score before resetting
-      }));
-
-      // Shuffle array for visual feedback
-      shuffle(updatedArray);
-
-      // Update the game board display but keep the score for now
-      setGame((prev) => ({
-        ...prev,
-        gameBoard: updatedArray,
-        clickedCards: [], // Reset clicked cards but keep score for display
-      }));
-
-      // Play the error sounds
-      playBadClickSounds(clickedCard.name);
-
-      // Delay showing the game over screen
-      const gameOverTimer = setTimeout(() => {
-        if (isMounted.current) {
+          // Now update React state - won't impact the global lock which is already applied
           setGame((prev) => ({
             ...prev,
-            currentScore: 0, // Now reset the score after delay
-            showGameOver: true,
-            gameResult: 'lose',
+            isGameLocked: true,
+            transitionLock: true,
+            lastClickResult: 'error',
+            finalScore: finalScore, // Store the final score before resetting
           }));
-        }
-      }, 1200);
 
-      // Cleanup timer if component unmounts
-      return () => clearTimeout(gameOverTimer);
-    } else {
-      // Good click - only proceed if not locked
-      if (!GAME_LOCKED) {
-        clickedCard.clicked = true;
-        updatedClickedCards.push(clickedCard);
+          // Shuffle array for visual feedback
+          shuffle(updatedArray);
 
-        // Play the Pokemon's cry sound for successful click
-        soundManager.playPokemonSound(clickedCard.name);
+          // Update the game board display but keep the score for now
+          setGame((prev) => ({
+            ...prev,
+            gameBoard: updatedArray,
+            clickedCards: [], // Reset clicked cards but keep score for display
+          }));
 
-        // Shuffle the array
-        shuffle(updatedArray);
+          // Play the error sounds
+          playBadClickSounds(clickedCard.name);
 
-        // Update state if still not locked
-        if (!GAME_LOCKED) {
-          setGame((prev) => {
-            const newScore = updatedClickedCards.length;
-            if (prev.currentScore >= prev.highScore) {
-              return {
+          // Delay showing the game over screen
+          const gameOverTimer = setTimeout(() => {
+            if (isMounted.current) {
+              setGame((prev) => ({
                 ...prev,
-                gameBoard: updatedArray,
-                currentScore: newScore,
-                highScore: newScore,
-                clickedCards: [...updatedClickedCards],
-                lastClickResult: 'success',
-              };
-            } else {
-              return {
-                ...prev,
-                gameBoard: updatedArray,
-                currentScore: newScore,
-                clickedCards: [...updatedClickedCards],
-                lastClickResult: 'success',
-              };
+                currentScore: 0, // Now reset the score after delay
+                showGameOver: true,
+                gameResult: 'lose',
+              }));
             }
-          });
+          }, 1200);
+
+          // Cleanup timer if component unmounts
+          return () => clearTimeout(gameOverTimer);
+        } else {
+          // Good click - only proceed if not locked
+          if (!GAME_LOCKED) {
+            clickedCard.clicked = true;
+            updatedClickedCards.push(clickedCard);
+
+            // Play the Pokemon's cry sound for successful click
+            soundManager.playPokemonSound(clickedCard.name);
+
+            // Shuffle the array
+            shuffle(updatedArray);
+
+            // Update state if still not locked
+            if (!GAME_LOCKED) {
+              setGame((prev) => {
+                const newScore = updatedClickedCards.length;
+                if (prev.currentScore >= prev.highScore) {
+                  return {
+                    ...prev,
+                    gameBoard: updatedArray,
+                    currentScore: newScore,
+                    highScore: newScore,
+                    clickedCards: [...updatedClickedCards],
+                    lastClickResult: 'success',
+                  };
+                } else {
+                  return {
+                    ...prev,
+                    gameBoard: updatedArray,
+                    currentScore: newScore,
+                    clickedCards: [...updatedClickedCards],
+                    lastClickResult: 'success',
+                  };
+                }
+              });
+            }
+          }
         }
-      }
-    }
-  };
+      };
+    },
+    [
+      game.isGameLocked,
+      game.transitionLock,
+      game.isLoading,
+      game.soundsLoaded,
+      game.gameBoard,
+      game.clickedCards,
+      game.currentScore,
+      playBadClickSounds,
+    ]
+  );
 
   // Get the appropriate grid classes based on difficulty
-  const getGridClasses = () => {
+  const getGridClasses = useCallback(() => {
     switch (game.difficultyLevel) {
       case 'easy':
         return 'grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4';
@@ -387,17 +404,17 @@ export default function App() {
       default:
         return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4';
     }
-  };
+  }, [game.difficultyLevel]);
 
   // Message for loading state
-  const getLoadingMessage = () => {
+  const getLoadingMessage = useCallback(() => {
     if (game.isLoading) {
       return 'Loading Pokémon...';
     } else if (!game.soundsLoaded) {
       return 'Preloading sounds...';
     }
     return '';
-  };
+  }, [game.isLoading, game.soundsLoaded]);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 overflow-hidden relative">
@@ -491,7 +508,7 @@ export default function App() {
                   url={card.url}
                   name={card.name}
                   id={card.id}
-                  handleClick={() => handleClick(index)}
+                  handleClick={createCardClickHandler(index)}
                   feedbackStatus={game.lastClickResult}
                   isDisabled={
                     GAME_LOCKED || game.isGameLocked || game.transitionLock
