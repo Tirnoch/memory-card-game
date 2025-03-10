@@ -53,43 +53,62 @@ export default function App() {
 
   // Fetch Pokemon data on initial component mount or when difficulty changes
   useEffect(() => {
-    const loadPokemonData = async () => {
-      if (!isMounted.current) return;
+    // Only fetch if component is mounted
+    if (isMounted.current) {
+      // Show loading spinner
+      setGame((prev) => ({ ...prev, isLoading: true }));
 
-      try {
+      // Fetch data
+      loadPokemonData();
+    }
+  }, [game.difficultyLevel]);
+
+  // Define loadPokemonData function
+  const loadPokemonData = async () => {
+    try {
+      console.log('Loading Pokemon data...');
+      const data = await fetchPokemonData(game.difficultyLevel);
+      console.log('Pokemon data loaded:', data);
+
+      // Check for valid data
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        console.error('Invalid Pokemon data returned:', data);
+        throw new Error('Failed to load Pokemon data');
+      }
+
+      // Check for valid image URLs
+      const invalidImages = data.filter(
+        (pokemon) => !pokemon.url || typeof pokemon.url !== 'string'
+      );
+      if (invalidImages.length > 0) {
+        console.warn('Some Pokemon have invalid image URLs:', invalidImages);
+      }
+
+      if (isMounted.current) {
+        // Shuffle the data
+        const shuffledData = shuffle([...data]);
+
+        // Preload Pokemon sounds in the background
+        soundManager.preloadPokemonSounds(shuffledData);
+
+        // When data is loaded, update state
         setGame((prev) => ({
           ...prev,
-          isLoading: true,
-          soundsLoaded: false,
+          gameBoard: shuffledData,
+          clickedCards: [],
+          isLoading: false,
+          lastClickResult: null,
         }));
-
-        const pokemonData = await fetchPokemonData(game.difficultyLevel);
-
-        // Start preloading Pokemon sounds
-        soundManager.preloadPokemonSounds(pokemonData);
-
-        if (isMounted.current) {
-          setGame((prev) => ({
-            ...prev,
-            gameBoard: shuffle([...pokemonData]),
-            isLoading: false,
-            soundsLoaded: true,
-          }));
-        }
-      } catch (error) {
-        console.error('Failed to load Pokemon data:', error);
-        if (isMounted.current) {
-          setGame((prev) => ({
-            ...prev,
-            isLoading: false,
-            soundsLoaded: true,
-          }));
-        }
       }
-    };
-
-    loadPokemonData();
-  }, [game.difficultyLevel]);
+    } catch (error) {
+      console.error('Error loading Pokemon data:', error);
+      // Handle error - show error state or retry
+      if (isMounted.current) {
+        // Even on error, stop loading state
+        setGame((prev) => ({ ...prev, isLoading: false }));
+      }
+    }
+  };
 
   // Apply pending difficulty change when starting a new game
   useEffect(() => {

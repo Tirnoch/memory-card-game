@@ -4,6 +4,7 @@ import { useState, useEffect, memo } from 'react';
 const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   // Set animation when feedback status changes, but only for error
   useEffect(() => {
@@ -39,6 +40,12 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
           : 'hover:scale-105 active:scale-95 focus:ring-2 focus:ring-yellow-400 focus:outline-none'
       } ${isHovered && !isDisabled ? 'scale-105 pokemon-card-hover' : ''}`;
     }
+  };
+
+  // Handle image load error
+  const handleImageError = () => {
+    console.error(`Failed to load image for ${name}`);
+    setImageError(true);
   };
 
   // Handle click without animation delay for normal clicks
@@ -100,6 +107,11 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
   const ariaAttributes = getAriaAttributes();
   const { descId, description, ...restAriaAttributes } = ariaAttributes;
 
+  // Fallback URL in case of error
+  const fallbackUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${
+    Math.floor(Math.random() * 800) + 1
+  }.png`;
+
   return (
     <button
       className={getFeedbackClass()}
@@ -109,6 +121,7 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
       onMouseLeave={handleMouseLeave}
       disabled={isDisabled}
       {...restAriaAttributes}
+      style={{ minHeight: '120px' }}
     >
       <span id={descId} className="sr-only">
         {description}
@@ -125,9 +138,9 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
           </p>
         </div>
 
-        <div className="card-image-container">
+        <div className="card-image-container" style={{ minHeight: '70px' }}>
           <img
-            src={url}
+            src={imageError ? fallbackUrl : url}
             alt={`sprite of Pokemon ${name}`}
             className={`card-image ${
               feedbackStatus === 'error' && isAnimating
@@ -135,6 +148,14 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
                 : ''
             }`}
             draggable="false"
+            onError={handleImageError}
+            style={{
+              display: 'block',
+              width: '70%',
+              height: 'auto',
+              position: 'relative',
+              zIndex: 999,
+            }}
           />
         </div>
       </div>

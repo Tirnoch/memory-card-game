@@ -19,7 +19,7 @@ body::before {
   bottom: 0;
   background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10 H90 V90 H10 Z' fill='none' stroke='%2350a060' stroke-width='0.6' stroke-opacity='0.2'/%3E%3Cpath d='M30 10 V90 M70 10 V90 M10 30 H90 M10 70 H90' fill='none' stroke='%2350a060' stroke-width='0.3' stroke-opacity='0.1'/%3E%3C/svg%3E");
   background-size: 40px 40px;
-  z-index: -1;
+  z-index: -10;
 }
 
 /* Add a Pokemon route pattern to the game board */
@@ -36,7 +36,7 @@ body::before {
   bottom: 0;
   background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='50' r='40' stroke='%23ff5d5d' stroke-width='3' fill='none' stroke-opacity='0.05'/%3E%3Cline x1='10' y1='50' x2='90' y2='50' stroke='%23ff5d5d' stroke-width='3' stroke-opacity='0.05'/%3E%3Ccircle cx='50' cy='50' r='15' stroke='%23ff5d5d' stroke-width='3' fill='none' stroke-opacity='0.05'/%3E%3Ccircle cx='50' cy='50' r='5' fill='%23ff5d5d' fill-opacity='0.05'/%3E%3C/svg%3E");
   background-size: 200px 200px;
-  z-index: -1;
+  z-index: -5;
   opacity: 0.4;
 }
 
@@ -44,7 +44,7 @@ body::before {
 .map-element {
   position: fixed;
   pointer-events: none;
-  z-index: -2;
+  z-index: -8;
   opacity: 0.1;
 }
 
@@ -96,10 +96,8 @@ body::before {
   background: linear-gradient(135deg, #fffde7 0%, #fff9c4 100%);
   border: 3px solid #ffd700;
   transition: all 0.2s ease;
-  transform-style: preserve-3d;
-  max-height: 100%;
   position: relative;
-  z-index: 1;
+  z-index: 10;
 }
 
 .pokemon-card::before {
@@ -114,44 +112,17 @@ body::before {
     rgba(255, 255, 255, 0.3),
     rgba(255, 255, 255, 0)
   );
-  z-index: 1;
+  z-index: -1;
   pointer-events: none;
 }
 
-/* Add holographic effect */
+/* Simplified holographic effect */
 .pokemon-card::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  right: -50%;
-  bottom: -50%;
-  background: linear-gradient(
-      217deg,
-      rgba(255, 0, 0, 0),
-      rgba(255, 0, 0, 0.1) 70.71%
-    ),
-    linear-gradient(127deg, rgba(0, 255, 0, 0), rgba(0, 255, 0, 0.1) 70.71%),
-    linear-gradient(336deg, rgba(0, 0, 255, 0), rgba(0, 0, 255, 0.1) 70.71%);
-  z-index: 0;
-  transform: rotate(0deg);
-  opacity: 0;
-  transition: opacity 0.3s;
-  pointer-events: none;
+  display: none;
 }
 
 .pokemon-card:hover::after {
-  opacity: 1;
-  animation: holo 3s linear infinite;
-}
-
-@keyframes holo {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  display: none;
 }
 
 .pokemon-card-hover {
@@ -172,7 +143,7 @@ body::before {
   height: 100%;
   padding: 0.25rem;
   position: relative;
-  z-index: 2;
+  z-index: 50;
 }
 
 /* Adjust padding based on screen size */
@@ -235,6 +206,7 @@ body::before {
   border-radius: 50%;
   margin: 0.125rem;
   position: relative;
+  z-index: 60;
 }
 
 @media (min-width: 640px) {
@@ -248,10 +220,8 @@ body::before {
   max-height: 85%;
   object-fit: contain;
   transition: transform 0.3s ease;
-}
-
-.pokemon-card:hover .card-image:not([class*='animate-']) {
-  transform: scale(1.1);
+  position: relative;
+  z-index: 70;
 }
 
 /* Improve focus styles for accessibility */
