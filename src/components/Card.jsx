@@ -1,13 +1,44 @@
 import PropTypes from 'prop-types';
-import { useState, memo } from 'react';
+import { useState, useEffect, memo } from 'react';
 
 const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
-  const [imageError, setImageError] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
-  // Handle image load error
-  const handleImageError = () => {
-    console.error(`Failed to load image for ${name}`);
-    setImageError(true);
+  // Set animation when feedback status changes, but only for error
+  useEffect(() => {
+    if (feedbackStatus === 'error') {
+      setIsAnimating(true);
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 500); // Make animation faster (500ms instead of 600ms)
+      return () => clearTimeout(timer);
+    }
+  }, [feedbackStatus]);
+
+  // Generate the appropriate CSS classes based on feedback status
+  const getFeedbackClass = () => {
+    const baseClasses = `pokemon-card relative w-full aspect-square flex flex-col items-center justify-center transition-all duration-300 ${
+      isHovered && !isDisabled ? 'float-animation' : ''
+    }`;
+
+    // First decide on disabled state
+    const disabledClasses = isDisabled
+      ? 'opacity-70 cursor-not-allowed pointer-events-none'
+      : '';
+
+    if (feedbackStatus === 'error') {
+      // Enhanced error animation
+      return `${baseClasses} pokemon-card-error ${
+        isAnimating ? 'animate-shake scale-105' : ''
+      } ${disabledClasses}`;
+    } else {
+      return `${baseClasses} ${
+        isDisabled
+          ? disabledClasses
+          : 'hover:scale-105 active:scale-95 focus:ring-2 focus:ring-yellow-400 focus:outline-none'
+      } ${isHovered && !isDisabled ? 'scale-105 pokemon-card-hover' : ''}`;
+    }
   };
 
   // Handle click without animation delay for normal clicks
@@ -20,78 +51,94 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
     handleClick();
   };
 
-  // Fallback URL in case of error
-  const fallbackUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${
-    Math.floor(Math.random() * 800) + 1
-  }.png`;
+  // Handle keyboard interactions for accessibility
+  const handleKeyDown = (e) => {
+    if (isDisabled) return;
 
-  // Simple styles directly applied
-  const cardStyle = {
-    border:
-      feedbackStatus === 'error' ? '3px solid #f44336' : '3px solid #ffeb3b',
-    borderRadius: '8px',
-    background: 'white',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '8px',
-    cursor: isDisabled ? 'not-allowed' : 'pointer',
-    opacity: isDisabled ? 0.7 : 1,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-    position: 'relative',
-    minHeight: '120px',
-    width: '100%',
-    zIndex: 10,
+    // Activate on Enter or Space
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault(); // Prevent scrolling on Space
+      handleClick();
+    }
   };
 
-  const imageContainerStyle = {
-    width: '100%',
-    height: '70%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#f5f5f5',
-    borderRadius: '50%',
-    margin: '4px 0',
-    zIndex: 20,
+  // Handle hover events
+  const handleMouseEnter = () => {
+    if (!isDisabled) {
+      setIsHovered(true);
+    }
   };
 
-  const imageStyle = {
-    display: 'block',
-    maxWidth: '70%',
-    maxHeight: '70%',
-    zIndex: 30,
+  const handleMouseLeave = () => {
+    setIsHovered(false);
   };
 
-  const nameStyle = {
-    textAlign: 'center',
-    fontWeight: '600',
-    fontSize: '12px',
-    textTransform: 'capitalize',
-    marginTop: '4px',
-    zIndex: 20,
+  // Determine appropriate ARIA attributes based on card state
+  const getAriaAttributes = () => {
+    let description = `Pokemon ${name}. Click to select this card.`;
+
+    if (feedbackStatus === 'error') {
+      description = `Pokemon ${name}. Error, this card was already selected.`;
+    } else if (isDisabled) {
+      description = `Pokemon ${name}. Card is currently disabled.`;
+    }
+
+    const descId = `description-${name.replace(/\s+/g, '-')}`;
+
+    return {
+      'aria-label': `Pokemon ${name}`,
+      'aria-disabled': isDisabled,
+      'aria-pressed': feedbackStatus === 'success',
+      role: 'button',
+      'aria-describedby': descId,
+      tabIndex: isDisabled ? -1 : 0,
+      descId: descId,
+      description: description,
+    };
   };
+
+  const ariaAttributes = getAriaAttributes();
+  const { descId, description, ...restAriaAttributes } = ariaAttributes;
 
   return (
-    <div
-      style={cardStyle}
+    <button
+      className={getFeedbackClass()}
       onClick={handleCardClick}
-      role="button"
-      tabIndex={isDisabled ? -1 : 0}
-      aria-disabled={isDisabled}
+      onKeyDown={handleKeyDown}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      disabled={isDisabled}
+      {...restAriaAttributes}
     >
-      <p style={nameStyle}>{name}</p>
-      <div style={imageContainerStyle}>
-        <img
-          src={imageError ? fallbackUrl : url}
-          alt={`sprite of Pokemon ${name}`}
-          style={imageStyle}
-          draggable="false"
-          onError={handleImageError}
-        />
+      <span id={descId} className="sr-only">
+        {description}
+      </span>
+
+      <div className="card-content">
+        <div className="card-header">
+          <p
+            className={`card-name capitalize ${
+              feedbackStatus === 'error' ? 'text-red-700 font-bold' : ''
+            }`}
+          >
+            {name}
+          </p>
+        </div>
+
+        <div className="card-image-container">
+          <img
+            src={url}
+            alt={`sprite of Pokemon ${name}`}
+            className={`card-image ${
+              feedbackStatus === 'error' && isAnimating
+                ? 'animate-[wiggle_0.2s_ease_3]'
+                : ''
+            }`}
+            draggable="false"
+          />
+        </div>
       </div>
-    </div>
+    </button>
   );
 };
 
@@ -107,4 +154,5 @@ Card.defaultProps = {
   isDisabled: false,
 };
 
+// Optimize with memo to prevent unnecessary re-renders
 export default memo(Card);

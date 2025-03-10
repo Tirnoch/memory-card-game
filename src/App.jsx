@@ -51,64 +51,45 @@ export default function App() {
     };
   }, []);
 
-  // Define loadPokemonData function
-  const loadPokemonData = useCallback(async () => {
-    try {
-      console.log('Loading Pokemon data...');
-      const data = await fetchPokemonData(game.difficultyLevel);
-      console.log('Pokemon data loaded:', data);
-
-      // Check for valid data
-      if (!data || !Array.isArray(data) || data.length === 0) {
-        console.error('Invalid Pokemon data returned:', data);
-        throw new Error('Failed to load Pokemon data');
-      }
-
-      // Check for valid image URLs
-      const invalidImages = data.filter(
-        (pokemon) => !pokemon.url || typeof pokemon.url !== 'string'
-      );
-      if (invalidImages.length > 0) {
-        console.warn('Some Pokemon have invalid image URLs:', invalidImages);
-      }
-
-      if (isMounted.current) {
-        // Shuffle the data
-        const shuffledData = shuffle([...data]);
-
-        // Preload Pokemon sounds in the background
-        soundManager.preloadPokemonSounds(shuffledData);
-
-        // When data is loaded, update state
-        setGame((prev) => ({
-          ...prev,
-          gameBoard: shuffledData,
-          clickedCards: [],
-          isLoading: false,
-          lastClickResult: null,
-        }));
-      }
-    } catch (error) {
-      console.error('Error loading Pokemon data:', error);
-      // Handle error - show error state or retry
-      if (isMounted.current) {
-        // Even on error, stop loading state
-        setGame((prev) => ({ ...prev, isLoading: false }));
-      }
-    }
-  }, [game.difficultyLevel]);
-
   // Fetch Pokemon data on initial component mount or when difficulty changes
   useEffect(() => {
-    // Only fetch if component is mounted
-    if (isMounted.current) {
-      // Show loading spinner
-      setGame((prev) => ({ ...prev, isLoading: true }));
+    const loadPokemonData = async () => {
+      if (!isMounted.current) return;
 
-      // Fetch data
-      loadPokemonData();
-    }
-  }, [loadPokemonData]);
+      try {
+        setGame((prev) => ({
+          ...prev,
+          isLoading: true,
+          soundsLoaded: false,
+        }));
+
+        const pokemonData = await fetchPokemonData(game.difficultyLevel);
+
+        // Start preloading Pokemon sounds
+        soundManager.preloadPokemonSounds(pokemonData);
+
+        if (isMounted.current) {
+          setGame((prev) => ({
+            ...prev,
+            gameBoard: shuffle([...pokemonData]),
+            isLoading: false,
+            soundsLoaded: true,
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to load Pokemon data:', error);
+        if (isMounted.current) {
+          setGame((prev) => ({
+            ...prev,
+            isLoading: false,
+            soundsLoaded: true,
+          }));
+        }
+      }
+    };
+
+    loadPokemonData();
+  }, [game.difficultyLevel]);
 
   // Apply pending difficulty change when starting a new game
   useEffect(() => {
@@ -414,13 +395,13 @@ export default function App() {
   const getGridClasses = useCallback(() => {
     switch (game.difficultyLevel) {
       case 'easy':
-        return 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-3 p-2';
+        return 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4';
       case 'medium':
-        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-3 p-2';
+        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6';
       case 'hard':
-        return 'grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 xl:grid-cols-8 gap-3 p-2';
+        return 'grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 xl:grid-cols-8';
       default:
-        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-3 p-2';
+        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6';
     }
   }, [game.difficultyLevel]);
 
@@ -436,6 +417,47 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 overflow-hidden relative">
+      {/* Pokemon map background elements */}
+      <div
+        className="map-element tree"
+        style={{ top: '15%', left: '5%' }}
+      ></div>
+      <div className="map-element tree" style={{ top: '8%', left: '8%' }}></div>
+      <div
+        className="map-element tree"
+        style={{ top: '25%', right: '12%' }}
+      ></div>
+      <div
+        className="map-element tree"
+        style={{ bottom: '10%', right: '5%' }}
+      ></div>
+      <div
+        className="map-element tree"
+        style={{ bottom: '20%', left: '7%' }}
+      ></div>
+
+      <div
+        className="map-element water"
+        style={{ top: '60%', right: '15%' }}
+      ></div>
+      <div
+        className="map-element water"
+        style={{ top: '10%', right: '30%' }}
+      ></div>
+
+      <div
+        className="map-element grass-patch"
+        style={{ top: '45%', left: '20%' }}
+      ></div>
+      <div
+        className="map-element grass-patch"
+        style={{ bottom: '30%', right: '25%' }}
+      ></div>
+      <div
+        className="map-element grass-patch"
+        style={{ top: '70%', left: '35%' }}
+      ></div>
+
       {/* Full page overlay that blocks all UI interaction when game is locked */}
       {(GAME_LOCKED || game.isGameLocked) && (
         <div
@@ -516,10 +538,10 @@ export default function App() {
 
             <div
               id="gameBoard"
-              className={`grid ${getGridClasses()} w-full h-full bg-white/50 rounded-lg ${
+              className={`flex-1 grid ${getGridClasses()} gap-2 sm:gap-3 auto-rows-min p-1 sm:p-2 justify-items-center content-center mx-auto w-full max-w-none h-full ${
                 GAME_LOCKED ? 'pointer-events-none' : ''
               }`}
-              style={{ maxHeight: 'calc(100vh - 80px)' }}
+              style={{ minHeight: '0', maxHeight: 'calc(100vh - 60px)' }}
             >
               {game.gameBoard.map((card, index) => (
                 <Card
