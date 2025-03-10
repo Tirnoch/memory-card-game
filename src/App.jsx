@@ -436,47 +436,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 overflow-hidden relative">
-      {/* Pokemon map background elements */}
-      <div
-        className="map-element tree"
-        style={{ top: '15%', left: '5%' }}
-      ></div>
-      <div className="map-element tree" style={{ top: '8%', left: '8%' }}></div>
-      <div
-        className="map-element tree"
-        style={{ top: '25%', right: '12%' }}
-      ></div>
-      <div
-        className="map-element tree"
-        style={{ bottom: '10%', right: '5%' }}
-      ></div>
-      <div
-        className="map-element tree"
-        style={{ bottom: '20%', left: '7%' }}
-      ></div>
-
-      <div
-        className="map-element water"
-        style={{ top: '60%', right: '15%' }}
-      ></div>
-      <div
-        className="map-element water"
-        style={{ top: '10%', right: '30%' }}
-      ></div>
-
-      <div
-        className="map-element grass-patch"
-        style={{ top: '45%', left: '20%' }}
-      ></div>
-      <div
-        className="map-element grass-patch"
-        style={{ bottom: '30%', right: '25%' }}
-      ></div>
-      <div
-        className="map-element grass-patch"
-        style={{ top: '70%', left: '35%' }}
-      ></div>
-
       {/* Full page overlay that blocks all UI interaction when game is locked */}
       {(GAME_LOCKED || game.isGameLocked) && (
         <div
