@@ -51,20 +51,8 @@ export default function App() {
     };
   }, []);
 
-  // Fetch Pokemon data on initial component mount or when difficulty changes
-  useEffect(() => {
-    // Only fetch if component is mounted
-    if (isMounted.current) {
-      // Show loading spinner
-      setGame((prev) => ({ ...prev, isLoading: true }));
-
-      // Fetch data
-      loadPokemonData();
-    }
-  }, [game.difficultyLevel]);
-
   // Define loadPokemonData function
-  const loadPokemonData = async () => {
+  const loadPokemonData = useCallback(async () => {
     try {
       console.log('Loading Pokemon data...');
       const data = await fetchPokemonData(game.difficultyLevel);
@@ -108,7 +96,19 @@ export default function App() {
         setGame((prev) => ({ ...prev, isLoading: false }));
       }
     }
-  };
+  }, [game.difficultyLevel]);
+
+  // Fetch Pokemon data on initial component mount or when difficulty changes
+  useEffect(() => {
+    // Only fetch if component is mounted
+    if (isMounted.current) {
+      // Show loading spinner
+      setGame((prev) => ({ ...prev, isLoading: true }));
+
+      // Fetch data
+      loadPokemonData();
+    }
+  }, [loadPokemonData]);
 
   // Apply pending difficulty change when starting a new game
   useEffect(() => {
