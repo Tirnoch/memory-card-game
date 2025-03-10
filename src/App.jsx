@@ -8,7 +8,6 @@ import {
 } from './components/fetchAPI';
 import GameOverModal from './components/GameOverModal';
 import soundManager from './components/SoundManager';
-import SoundToggle from './components/SoundToggle';
 
 // Add a top-level lock variable outside of React state for immediate effect
 let GAME_LOCKED = false;
@@ -396,13 +395,13 @@ export default function App() {
   const getGridClasses = useCallback(() => {
     switch (game.difficultyLevel) {
       case 'easy':
-        return 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-4';
+        return 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4';
       case 'medium':
-        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6';
+        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6';
       case 'hard':
         return 'grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 xl:grid-cols-8';
       default:
-        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6';
+        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6';
     }
   }, [game.difficultyLevel]);
 
@@ -418,6 +417,47 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 overflow-hidden relative">
+      {/* Pokemon map background elements */}
+      <div
+        className="map-element tree"
+        style={{ top: '15%', left: '5%' }}
+      ></div>
+      <div className="map-element tree" style={{ top: '8%', left: '8%' }}></div>
+      <div
+        className="map-element tree"
+        style={{ top: '25%', right: '12%' }}
+      ></div>
+      <div
+        className="map-element tree"
+        style={{ bottom: '10%', right: '5%' }}
+      ></div>
+      <div
+        className="map-element tree"
+        style={{ bottom: '20%', left: '7%' }}
+      ></div>
+
+      <div
+        className="map-element water"
+        style={{ top: '60%', right: '15%' }}
+      ></div>
+      <div
+        className="map-element water"
+        style={{ top: '10%', right: '30%' }}
+      ></div>
+
+      <div
+        className="map-element grass-patch"
+        style={{ top: '45%', left: '20%' }}
+      ></div>
+      <div
+        className="map-element grass-patch"
+        style={{ bottom: '30%', right: '25%' }}
+      ></div>
+      <div
+        className="map-element grass-patch"
+        style={{ top: '70%', left: '35%' }}
+      ></div>
+
       {/* Full page overlay that blocks all UI interaction when game is locked */}
       {(GAME_LOCKED || game.isGameLocked) && (
         <div
@@ -498,7 +538,7 @@ export default function App() {
 
             <div
               id="gameBoard"
-              className={`flex-1 grid ${getGridClasses()} gap-2 sm:gap-3 auto-rows-min p-1 sm:p-2 justify-items-center content-center mx-auto w-full max-w-full h-full ${
+              className={`flex-1 grid ${getGridClasses()} gap-2 sm:gap-3 auto-rows-min p-1 sm:p-2 justify-items-center content-center mx-auto w-full max-w-none h-full ${
                 GAME_LOCKED ? 'pointer-events-none' : ''
               }`}
               style={{ minHeight: '0', maxHeight: 'calc(100vh - 60px)' }}
@@ -529,10 +569,6 @@ export default function App() {
         onPlayAgain={startNewGame}
         onChangeDifficulty={handleGameOverDifficultyChange}
         currentDifficulty={game.pendingDifficulty || game.difficultyLevel}
-      />
-
-      <SoundToggle
-        isDisabled={GAME_LOCKED || game.isGameLocked || game.transitionLock}
       />
     </div>
   );

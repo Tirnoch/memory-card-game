@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { memo } from 'react';
+import SoundToggle from './SoundToggle';
 
 const Header = ({
   highScore,
@@ -16,7 +17,7 @@ const Header = ({
 
   return (
     <header
-      className="bg-gradient-to-tr from-red-500 to-red-400 text-white flex flex-col sm:flex-row items-center p-1 sm:p-3 shadow-md relative overflow-hidden"
+      className="bg-gradient-to-tr from-red-500 to-red-400 text-white flex flex-row items-center justify-between p-1 sm:p-3 shadow-md relative overflow-hidden"
       role="banner"
     >
       {/* Pokeball decorative elements - only show on larger screens */}
@@ -24,7 +25,15 @@ const Header = ({
       <div className="hidden sm:block absolute -right-12 -top-12 w-24 h-24 bg-red-500 rounded-full opacity-10"></div>
       <div className="hidden sm:block absolute right-8 top-1/2 w-8 h-8 bg-white rounded-full opacity-20"></div>
 
-      <h1 className="text-lg sm:text-xl md:text-2xl font-bold sm:flex-1 mb-1 sm:mb-0 z-10">
+      {/* Small Pokeball icon for mobile */}
+      <div className="sm:hidden w-6 h-6 relative z-10 ml-1">
+        <div className="w-full h-full bg-red-500 rounded-full border border-white"></div>
+        <div className="absolute top-1/2 left-0 w-full h-[2px] bg-white"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full"></div>
+      </div>
+
+      {/* Game title - hidden on mobile */}
+      <h1 className="hidden sm:block text-lg sm:text-xl md:text-2xl font-bold flex-1 z-10">
         Pokémon Memory
       </h1>
 
@@ -47,7 +56,7 @@ const Header = ({
           </p>
         </div>
 
-        <div className="flex items-center">
+        <div className="flex items-center gap-1 sm:gap-2">
           <label htmlFor="difficulty-select" className="text-white sr-only">
             Select difficulty level
           </label>
@@ -66,6 +75,9 @@ const Header = ({
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
           </select>
+
+          {/* Sound toggle button */}
+          <SoundToggle isDisabled={isDisabled} />
         </div>
       </div>
     </header>

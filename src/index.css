@@ -5,7 +5,7 @@
 /* Pokemon-themed custom styles */
 body {
   font-family: 'Montserrat', sans-serif;
-  background: linear-gradient(135deg, #f0f8ff, #e6f2ff);
+  background: linear-gradient(135deg, #e8f4e4, #d5ecd2);
   background-attachment: fixed;
   position: relative;
 }
@@ -17,11 +17,12 @@ body::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232176ff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10 H90 V90 H10 Z' fill='none' stroke='%2350a060' stroke-width='0.6' stroke-opacity='0.2'/%3E%3Cpath d='M30 10 V90 M70 10 V90 M10 30 H90 M10 70 H90' fill='none' stroke='%2350a060' stroke-width='0.3' stroke-opacity='0.1'/%3E%3C/svg%3E");
+  background-size: 40px 40px;
   z-index: -1;
 }
 
-/* Add a subtle pokeball pattern to the game board */
+/* Add a Pokemon route pattern to the game board */
 #gameBoard {
   position: relative;
 }
@@ -37,6 +38,37 @@ body::before {
   background-size: 200px 200px;
   z-index: -1;
   opacity: 0.4;
+}
+
+/* Pokemon map elements */
+.map-element {
+  position: fixed;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.1;
+}
+
+.tree {
+  width: 30px;
+  height: 30px;
+  background-color: #2e7d32;
+  border-radius: 50% 50% 10% 10%;
+  box-shadow: 0 4px 0 #1b5e20;
+}
+
+.water {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #29b6f6 0%, #0277bd 100%);
+  border-radius: 40%;
+  opacity: 0.06;
+}
+
+.grass-patch {
+  width: 60px;
+  height: 20px;
+  background-color: #66bb6a;
+  border-radius: 30% 30% 60% 60%;
 }
 
 /* Pokemon card styling */

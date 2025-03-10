@@ -1,36 +1,51 @@
-import { useState, memo } from 'react';
 import PropTypes from 'prop-types';
+import { useState, useEffect, memo } from 'react';
 import soundManager from './SoundManager';
 
 const SoundToggle = ({ isDisabled }) => {
-  const [isMuted, setIsMuted] = useState(soundManager.getMuteStatus());
+  const [isMuted, setIsMuted] = useState(() => soundManager.isMuted());
+
+  // Update state when external mute changes (via soundManager)
+  useEffect(() => {
+    const handleMuteChange = (muted) => {
+      setIsMuted(muted);
+    };
+
+    soundManager.on('muteChange', handleMuteChange);
+    return () => {
+      soundManager.off('muteChange', handleMuteChange);
+    };
+  }, []);
 
   const toggleSound = (e) => {
     if (isDisabled) {
       e.preventDefault();
       e.stopPropagation();
-      return;
+      return false;
     }
-    const newMuteStatus = soundManager.toggleMute();
-    setIsMuted(newMuteStatus);
+
+    setIsMuted((prev) => {
+      const newState = !prev;
+      soundManager.setMuted(newState);
+      soundManager.play('click');
+      return newState;
+    });
   };
 
   return (
     <button
       onClick={toggleSound}
-      className={`fixed bottom-4 right-4 z-40 p-3 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md transition-colors ${
-        isDisabled ? 'opacity-50 cursor-not-allowed' : ''
-      }`}
-      aria-label={isMuted ? 'Unmute game sounds' : 'Mute game sounds'}
-      title={isMuted ? 'Unmute game sounds' : 'Mute game sounds'}
       disabled={isDisabled}
-      aria-disabled={isDisabled}
+      className={`bg-red-500 hover:bg-red-600 text-white flex items-center justify-center rounded-md focus:outline-none focus:ring-1 focus:ring-red-300 transition-colors w-7 h-7 p-1 sm:w-8 sm:h-8 sm:p-1.5 ${
+        isDisabled ? 'opacity-70 cursor-not-allowed' : ''
+      }`}
+      aria-label={isMuted ? 'Unmute sound' : 'Mute sound'}
+      title={isMuted ? 'Unmute' : 'Mute'}
     >
       {isMuted ? (
-        // Muted icon
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
+          className="w-full h-full"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -49,10 +64,9 @@ const SoundToggle = ({ isDisabled }) => {
           />
         </svg>
       ) : (
-        // Unmuted icon
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
+          className="w-full h-full"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
