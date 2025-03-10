@@ -18,7 +18,7 @@ const SoundToggle = ({ isDisabled }) => {
   return (
     <button
       onClick={toggleSound}
-      className={`fixed bottom-4 right-4 z-40 p-3 bg-sky-700 hover:bg-sky-800 text-white rounded-full shadow-md transition-colors ${
+      className={`fixed bottom-4 right-4 z-40 p-3 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md transition-colors ${
         isDisabled ? 'opacity-50 cursor-not-allowed' : ''
       }`}
       aria-label={isMuted ? 'Unmute game sounds' : 'Mute game sounds'}

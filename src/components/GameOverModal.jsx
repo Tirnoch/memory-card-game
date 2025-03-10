@@ -95,7 +95,7 @@ const GameOverModal = ({
           <h2
             id="modal-title"
             className={`text-2xl font-bold mb-4 ${
-              isWin ? 'text-green-600' : 'text-red-600'
+              isWin ? 'text-green-600' : 'text-red-500'
             }`}
           >
             {isWin ? 'Congratulations!' : 'Game Over!'}
@@ -123,8 +123,8 @@ const GameOverModal = ({
               onClick={handlePlayAgain}
               className={`px-6 py-2 text-white rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                 isWin
-                  ? 'bg-green-600 hover:bg-green-700 focus:ring-green-400'
-                  : 'bg-red-600 hover:bg-red-700 focus:ring-red-400'
+                  ? 'bg-green-500 hover:bg-green-600 focus:ring-green-400'
+                  : 'bg-red-500 hover:bg-red-600 focus:ring-red-400'
               }`}
               aria-label="Play again"
             >
@@ -140,7 +140,7 @@ const GameOverModal = ({
               </label>
               <select
                 id="modal-difficulty-select"
-                className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-300"
+                className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-300"
                 value={currentDifficulty}
                 onChange={handleDifficultyChange}
                 aria-label="Select difficulty level for next game"
