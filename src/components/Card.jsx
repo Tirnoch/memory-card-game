@@ -18,7 +18,7 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
 
   // Generate the appropriate CSS classes based on feedback status
   const getFeedbackClass = () => {
-    const baseClasses = `pokemon-card relative w-full aspect-square flex flex-col items-center justify-center transition-all duration-300 ${
+    const baseClasses = `pokemon-card transition-all duration-300 ${
       isHovered && !isDisabled ? 'float-animation' : ''
     }`;
 
@@ -34,111 +34,74 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
       } ${disabledClasses}`;
     } else {
       return `${baseClasses} ${
-        isDisabled
-          ? disabledClasses
-          : 'hover:scale-105 active:scale-95 focus:ring-2 focus:ring-yellow-400 focus:outline-none'
+        isDisabled ? disabledClasses : 'hover:scale-105 active:scale-95'
       } ${isHovered && !isDisabled ? 'scale-105 pokemon-card-hover' : ''}`;
     }
   };
 
-  // Handle click without animation delay for normal clicks
+  // Handle card click
   const handleCardClick = (e) => {
-    if (isDisabled) {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    }
-    handleClick();
-  };
-
-  // Handle keyboard interactions for accessibility
-  const handleKeyDown = (e) => {
-    if (isDisabled) return;
-
-    // Activate on Enter or Space
-    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-      e.preventDefault(); // Prevent scrolling on Space
+    e.preventDefault();
+    if (!isDisabled) {
       handleClick();
     }
   };
 
-  // Handle hover events
+  // Handle keyboard interaction
+  const handleKeyDown = (e) => {
+    // Handle keyboard navigation - Enter or Space to activate
+    if ((e.key === 'Enter' || e.key === ' ') && !isDisabled) {
+      e.preventDefault();
+      handleClick();
+    }
+  };
+
+  // Handle mouse enter for hover effect
   const handleMouseEnter = () => {
     if (!isDisabled) {
       setIsHovered(true);
     }
   };
 
+  // Handle mouse leave to remove hover effect
   const handleMouseLeave = () => {
     setIsHovered(false);
   };
 
-  // Determine appropriate ARIA attributes based on card state
+  // Get ARIA attributes for better accessibility
   const getAriaAttributes = () => {
-    let description = `Pokemon ${name}. Click to select this card.`;
-
-    if (feedbackStatus === 'error') {
-      description = `Pokemon ${name}. Error, this card was already selected.`;
-    } else if (isDisabled) {
-      description = `Pokemon ${name}. Card is currently disabled.`;
-    }
-
-    const descId = `description-${name.replace(/\s+/g, '-')}`;
-
     return {
+      role: 'button',
       'aria-label': `Pokemon ${name}`,
       'aria-disabled': isDisabled,
       'aria-pressed': feedbackStatus === 'success',
-      role: 'button',
-      'aria-describedby': descId,
-      tabIndex: isDisabled ? -1 : 0,
-      descId: descId,
-      description: description,
     };
   };
 
-  const ariaAttributes = getAriaAttributes();
-  const { descId, description, ...restAriaAttributes } = ariaAttributes;
-
   return (
-    <button
+    <div
       className={getFeedbackClass()}
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      disabled={isDisabled}
-      {...restAriaAttributes}
+      tabIndex={isDisabled ? -1 : 0}
+      {...getAriaAttributes()}
     >
-      <span id={descId} className="sr-only">
-        {description}
-      </span>
-
-      <div className="card-content">
+      <div className="card-content w-full h-full flex flex-col">
         <div className="card-header">
-          <p
-            className={`card-name capitalize ${
-              feedbackStatus === 'error' ? 'text-red-700 font-bold' : ''
-            }`}
-          >
-            {name}
-          </p>
+          <h3 className="card-name">{name}</h3>
         </div>
-
         <div className="card-image-container">
           <img
             src={url}
-            alt={`sprite of Pokemon ${name}`}
-            className={`card-image ${
-              feedbackStatus === 'error' && isAnimating
-                ? 'animate-[wiggle_0.2s_ease_3]'
-                : ''
-            }`}
-            draggable="false"
+            alt={`${name} Pokemon`}
+            className="card-image"
+            loading="lazy"
           />
         </div>
       </div>
-    </button>
+    </div>
   );
 };
 
@@ -146,13 +109,14 @@ Card.propTypes = {
   url: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
   handleClick: PropTypes.func.isRequired,
-  feedbackStatus: PropTypes.oneOf(['success', 'error', null]),
+  feedbackStatus: PropTypes.oneOf(['', 'success', 'error']),
   isDisabled: PropTypes.bool,
 };
 
 Card.defaultProps = {
+  feedbackStatus: '',
   isDisabled: false,
 };
 
-// Optimize with memo to prevent unnecessary re-renders
+// Use React.memo to prevent unnecessary re-renders
 export default memo(Card);
