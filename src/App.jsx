@@ -396,13 +396,13 @@ export default function App() {
   const getGridClasses = useCallback(() => {
     switch (game.difficultyLevel) {
       case 'easy':
-        return 'grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4';
+        return 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-4';
       case 'medium':
-        return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4';
+        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6';
       case 'hard':
-        return 'grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4';
+        return 'grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 xl:grid-cols-8';
       default:
-        return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4';
+        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6';
     }
   }, [game.difficultyLevel]);
 
@@ -469,7 +469,7 @@ export default function App() {
             </p>
           </div>
         ) : (
-          <div className="relative w-full flex-1">
+          <div className="relative w-full flex-1 overflow-hidden">
             {/* Overlay to prevent clicks during transition */}
             {(game.transitionLock || GAME_LOCKED) && !game.showGameOver && (
               <div
@@ -498,9 +498,10 @@ export default function App() {
 
             <div
               id="gameBoard"
-              className={`flex-1 grid ${getGridClasses()} gap-3 sm:gap-6 md:gap-8 p-4 sm:p-6 md:p-10 justify-items-center content-start mx-auto w-full max-w-7xl ${
+              className={`flex-1 grid ${getGridClasses()} gap-2 sm:gap-3 auto-rows-min p-1 sm:p-2 justify-items-center content-center mx-auto w-full max-w-full h-full ${
                 GAME_LOCKED ? 'pointer-events-none' : ''
               }`}
+              style={{ minHeight: '0', maxHeight: 'calc(100vh - 60px)' }}
             >
               {game.gameBoard.map((card, index) => (
                 <Card

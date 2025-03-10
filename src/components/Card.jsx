@@ -18,7 +18,7 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
 
   // Generate the appropriate CSS classes based on feedback status
   const getFeedbackClass = () => {
-    const baseClasses = `rounded-xl border-2 relative w-full aspect-square flex flex-col items-center justify-center transition-all duration-300 ${
+    const baseClasses = `pokemon-card relative w-full aspect-square flex flex-col items-center justify-center transition-all duration-300 ${
       isHovered && !isDisabled ? 'float-animation' : ''
     }`;
 
@@ -29,19 +29,15 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
 
     if (feedbackStatus === 'error') {
       // Enhanced error animation
-      return `${baseClasses} border-red-500 bg-red-100 shadow-lg shadow-red-300 ${
+      return `${baseClasses} pokemon-card-error ${
         isAnimating ? 'animate-shake scale-105' : ''
       } ${disabledClasses}`;
     } else {
       return `${baseClasses} ${
         isDisabled
           ? disabledClasses
-          : 'hover:bg-slate-300 hover:border-sky-400 active:bg-slate-200 hover:shadow-md hover:scale-105 focus:ring-2 focus:ring-sky-500 focus:outline-none'
-      } border-stone-600 ${
-        isHovered && !isDisabled
-          ? 'bg-slate-100 scale-105 shadow-md border-sky-400'
-          : 'bg-white'
-      }`;
+          : 'hover:scale-105 active:scale-95 focus:ring-2 focus:ring-yellow-400 focus:outline-none'
+      } ${isHovered && !isDisabled ? 'scale-105 pokemon-card-hover' : ''}`;
     }
   };
 
@@ -118,29 +114,30 @@ const Card = ({ url, name, handleClick, feedbackStatus, isDisabled }) => {
         {description}
       </span>
 
-      <p
-        className={`text-center font-medium text-xs sm:text-sm md:text-base w-full px-1 truncate capitalize ${
-          feedbackStatus === 'error'
-            ? 'text-red-700 font-bold'
-            : isHovered && !isDisabled
-            ? 'text-sky-700'
-            : ''
-        }`}
-      >
-        {name}
-      </p>
-      <img
-        src={url}
-        alt={`sprite of Pokemon ${name}`}
-        className={`p-2 sm:p-3 md:p-4 h-auto w-auto max-h-[80%] object-contain transition-transform ${
-          feedbackStatus === 'error' && isAnimating
-            ? 'animate-[wiggle_0.2s_ease_3]'
-            : isDisabled
-            ? ''
-            : 'hover:scale-110 transition-transform duration-300'
-        }`}
-        draggable="false"
-      />
+      <div className="card-content">
+        <div className="card-header">
+          <p
+            className={`card-name capitalize ${
+              feedbackStatus === 'error' ? 'text-red-700 font-bold' : ''
+            }`}
+          >
+            {name}
+          </p>
+        </div>
+
+        <div className="card-image-container">
+          <img
+            src={url}
+            alt={`sprite of Pokemon ${name}`}
+            className={`card-image ${
+              feedbackStatus === 'error' && isAnimating
+                ? 'animate-[wiggle_0.2s_ease_3]'
+                : ''
+            }`}
+            draggable="false"
+          />
+        </div>
+      </div>
     </button>
   );
 };
