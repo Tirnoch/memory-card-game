@@ -414,13 +414,13 @@ export default function App() {
   const getGridClasses = useCallback(() => {
     switch (game.difficultyLevel) {
       case 'easy':
-        return 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4';
+        return 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-3 p-2';
       case 'medium':
-        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6';
+        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-3 p-2';
       case 'hard':
-        return 'grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 xl:grid-cols-8';
+        return 'grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 xl:grid-cols-8 gap-3 p-2';
       default:
-        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6';
+        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-3 p-2';
     }
   }, [game.difficultyLevel]);
 
@@ -557,10 +557,10 @@ export default function App() {
 
             <div
               id="gameBoard"
-              className={`flex-1 grid ${getGridClasses()} gap-2 sm:gap-3 auto-rows-min p-1 sm:p-2 justify-items-center content-center mx-auto w-full max-w-none h-full ${
+              className={`grid ${getGridClasses()} w-full h-full bg-white/50 rounded-lg ${
                 GAME_LOCKED ? 'pointer-events-none' : ''
               }`}
-              style={{ minHeight: '0', maxHeight: 'calc(100vh - 60px)' }}
+              style={{ maxHeight: 'calc(100vh - 80px)' }}
             >
               {game.gameBoard.map((card, index) => (
                 <Card
