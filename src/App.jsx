@@ -33,6 +33,20 @@ export default function App() {
     finalScore: 0, // Store the final score when game ends for display in game over modal
   });
 
+  // Add a window resize listener to update grid columns when screen size changes
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   // Track mounted state
   useEffect(() => {
     isMounted.current = true;
@@ -391,20 +405,6 @@ export default function App() {
     ]
   );
 
-  // Get the appropriate grid classes based on difficulty
-  const getGridClasses = useCallback(() => {
-    switch (game.difficultyLevel) {
-      case 'easy':
-        return 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4';
-      case 'medium':
-        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6';
-      case 'hard':
-        return 'grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 xl:grid-cols-8';
-      default:
-        return 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6';
-    }
-  }, [game.difficultyLevel]);
-
   // Message for loading state
   const getLoadingMessage = useCallback(() => {
     if (game.isLoading) {
@@ -415,48 +415,181 @@ export default function App() {
     return '';
   }, [game.isLoading, game.soundsLoaded]);
 
+  // Get the appropriate grid style based on difficulty and screen size
+  const getGridStyle = useCallback(() => {
+    // Fix column count based on screen width but maintain correct card count
+    const getCardLayout = () => {
+      // Card counts for different difficulties
+      const cardCount = getCardCountByDifficulty(game.difficultyLevel);
+
+      // Determine best grid layout based on screen width and orientation
+      const isLandscape = windowWidth > window.innerHeight;
+
+      if (windowWidth < 640) {
+        // mobile
+        if (isLandscape) {
+          // For landscape mobile, prefer wider layout
+          if (game.difficultyLevel === 'easy') return { cols: 4, rows: 2 }; // 8 cards
+          if (game.difficultyLevel === 'medium') return { cols: 4, rows: 3 }; // 12 cards
+          if (game.difficultyLevel === 'hard') return { cols: 4, rows: 4 }; // 16 cards
+        } else {
+          // For portrait mobile
+          if (game.difficultyLevel === 'easy') return { cols: 2, rows: 4 }; // 8 cards
+          if (game.difficultyLevel === 'medium') return { cols: 3, rows: 4 }; // 12 cards
+          if (game.difficultyLevel === 'hard') return { cols: 4, rows: 4 }; // 16 cards
+        }
+      } else {
+        // Tablet and desktop - wider layout
+        if (game.difficultyLevel === 'easy') return { cols: 4, rows: 2 }; // 8 cards
+        if (game.difficultyLevel === 'medium') return { cols: 4, rows: 3 }; // 12 cards
+        if (game.difficultyLevel === 'hard') return { cols: 4, rows: 4 }; // 16 cards
+      }
+
+      return { cols: 4, rows: Math.ceil(cardCount / 4) }; // Default
+    };
+
+    const layout = getCardLayout();
+
+    // Calculate available space
+    const headerHeight = windowWidth < 640 ? 50 : 60; // Smaller header on mobile
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = windowWidth;
+
+    // Calculate the available space for the grid
+    const availableWidth = viewportWidth;
+    const availableHeight = viewportHeight - headerHeight;
+
+    // Configure padding and gaps based on screen size
+    const horizontalPadding = windowWidth < 640 ? 8 : 16;
+    const verticalPadding = windowWidth < 640 ? 8 : 16;
+    const cardGap = windowWidth < 640 ? 6 : 8;
+
+    // Calculate space available for cards after padding
+    const gridInnerWidth = availableWidth - horizontalPadding * 2;
+    const gridInnerHeight = availableHeight - verticalPadding * 2;
+
+    // Calculate space for each card including gaps
+    const effectiveCardWidth = Math.floor(
+      (gridInnerWidth - cardGap * (layout.cols - 1)) / layout.cols
+    );
+    const effectiveCardHeight = Math.floor(
+      (gridInnerHeight - cardGap * (layout.rows - 1)) / layout.rows
+    );
+
+    // Set card aspect ratio for better screen coverage
+    const cardWidth = effectiveCardWidth;
+    const cardHeight = effectiveCardHeight;
+
+    // Set actual grid dimensions
+    const gridWidth = cardWidth * layout.cols + cardGap * (layout.cols - 1);
+    const gridHeight = cardHeight * layout.rows + cardGap * (layout.rows - 1);
+
+    return {
+      display: 'grid',
+      gridTemplateColumns: `repeat(${layout.cols}, ${cardWidth}px)`,
+      gridTemplateRows: `repeat(${layout.rows}, ${cardHeight}px)`,
+      gap: `${cardGap}px`,
+      justifyContent: 'center',
+      alignContent: 'center',
+      padding: `${verticalPadding}px ${horizontalPadding}px`,
+      width: `${gridWidth + horizontalPadding * 2}px`,
+      height: `${gridHeight + verticalPadding * 2}px`,
+      maxWidth: '100vw',
+      maxHeight: `calc(100vh - ${headerHeight}px)`,
+      margin: '0 auto',
+      overflow: 'hidden',
+      '--card-width': `${cardWidth}px`,
+      '--card-height': `${cardHeight}px`,
+    };
+  }, [game.difficultyLevel, windowWidth]);
+
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 overflow-hidden relative">
-      {/* Pokemon map background elements */}
+    <div className="min-h-screen flex flex-col overflow-hidden relative">
+      {/* Pokemon map background elements - now moved to a separate container for better organization */}
       <div
-        className="map-element tree"
-        style={{ top: '15%', left: '5%' }}
-      ></div>
-      <div className="map-element tree" style={{ top: '8%', left: '8%' }}></div>
-      <div
-        className="map-element tree"
-        style={{ top: '25%', right: '12%' }}
-      ></div>
-      <div
-        className="map-element tree"
-        style={{ bottom: '10%', right: '5%' }}
-      ></div>
-      <div
-        className="map-element tree"
-        style={{ bottom: '20%', left: '7%' }}
-      ></div>
+        className="fixed inset-0 overflow-hidden pointer-events-none"
+        style={{ zIndex: 0 }}
+      >
+        {/* Trees */}
+        <div
+          className="map-element tree"
+          style={{ top: '15%', left: '5%' }}
+        ></div>
+        <div
+          className="map-element tree"
+          style={{ top: '8%', left: '8%' }}
+        ></div>
+        <div
+          className="map-element tree"
+          style={{ top: '25%', right: '12%' }}
+        ></div>
+        <div
+          className="map-element tree"
+          style={{ bottom: '10%', right: '5%' }}
+        ></div>
+        <div
+          className="map-element tree"
+          style={{ bottom: '20%', left: '7%' }}
+        ></div>
+        <div
+          className="map-element tree"
+          style={{ top: '50%', left: '3%' }}
+        ></div>
+        <div
+          className="map-element tree"
+          style={{ top: '30%', left: '15%' }}
+        ></div>
+        <div
+          className="map-element tree"
+          style={{ bottom: '35%', right: '10%' }}
+        ></div>
 
-      <div
-        className="map-element water"
-        style={{ top: '60%', right: '15%' }}
-      ></div>
-      <div
-        className="map-element water"
-        style={{ top: '10%', right: '30%' }}
-      ></div>
+        {/* Water */}
+        <div
+          className="map-element water"
+          style={{ top: '60%', right: '15%' }}
+        ></div>
+        <div
+          className="map-element water"
+          style={{ top: '10%', right: '30%' }}
+        ></div>
+        <div
+          className="map-element water"
+          style={{ bottom: '15%', left: '20%' }}
+        ></div>
 
-      <div
-        className="map-element grass-patch"
-        style={{ top: '45%', left: '20%' }}
-      ></div>
-      <div
-        className="map-element grass-patch"
-        style={{ bottom: '30%', right: '25%' }}
-      ></div>
-      <div
-        className="map-element grass-patch"
-        style={{ top: '70%', left: '35%' }}
-      ></div>
+        {/* Grass patches */}
+        <div
+          className="map-element grass-patch"
+          style={{ top: '45%', left: '20%' }}
+        ></div>
+        <div
+          className="map-element grass-patch"
+          style={{ bottom: '30%', right: '25%' }}
+        ></div>
+        <div
+          className="map-element grass-patch"
+          style={{ top: '70%', left: '35%' }}
+        ></div>
+        <div
+          className="map-element grass-patch"
+          style={{ top: '20%', left: '30%' }}
+        ></div>
+        <div
+          className="map-element grass-patch"
+          style={{ bottom: '50%', right: '15%' }}
+        ></div>
+
+        {/* Paths */}
+        <div
+          className="map-element path horizontal"
+          style={{ top: '40%', left: '25%', width: '50%' }}
+        ></div>
+        <div
+          className="map-element path vertical"
+          style={{ top: '20%', left: '50%', height: '60%' }}
+        ></div>
+      </div>
 
       {/* Full page overlay that blocks all UI interaction when game is locked */}
       {(GAME_LOCKED || game.isGameLocked) && (
@@ -509,7 +642,7 @@ export default function App() {
             </p>
           </div>
         ) : (
-          <div className="relative w-full flex-1 overflow-hidden">
+          <div className="relative w-full h-full overflow-hidden">
             {/* Overlay to prevent clicks during transition */}
             {(game.transitionLock || GAME_LOCKED) && !game.showGameOver && (
               <div
@@ -538,10 +671,10 @@ export default function App() {
 
             <div
               id="gameBoard"
-              className={`flex-1 grid ${getGridClasses()} gap-2 sm:gap-3 auto-rows-min p-1 sm:p-2 justify-items-center content-center mx-auto w-full max-w-none h-full ${
+              className={`flex-1 justify-items-center content-center mx-auto w-full h-full ${
                 GAME_LOCKED ? 'pointer-events-none' : ''
-              }`}
-              style={{ minHeight: '0', maxHeight: 'calc(100vh - 60px)' }}
+              } pokemon-card-grid`}
+              style={getGridStyle()}
             >
               {game.gameBoard.map((card, index) => (
                 <Card

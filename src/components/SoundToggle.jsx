@@ -3,7 +3,7 @@ import { useState, useEffect, memo } from 'react';
 import soundManager from './SoundManager';
 
 const SoundToggle = ({ isDisabled }) => {
-  const [isMuted, setIsMuted] = useState(() => soundManager.isMuted());
+  const [isMuted, setIsMuted] = useState(() => soundManager.getMuteStatus());
 
   // Update state when external mute changes (via soundManager)
   useEffect(() => {
@@ -11,10 +11,15 @@ const SoundToggle = ({ isDisabled }) => {
       setIsMuted(muted);
     };
 
-    soundManager.on('muteChange', handleMuteChange);
-    return () => {
-      soundManager.off('muteChange', handleMuteChange);
-    };
+    // Add listener if soundManager supports events
+    if (soundManager.on && soundManager.off) {
+      soundManager.on('muteChange', handleMuteChange);
+      return () => {
+        soundManager.off('muteChange', handleMuteChange);
+      };
+    }
+
+    return () => {};
   }, []);
 
   const toggleSound = (e) => {
@@ -24,12 +29,14 @@ const SoundToggle = ({ isDisabled }) => {
       return false;
     }
 
-    setIsMuted((prev) => {
-      const newState = !prev;
-      soundManager.setMuted(newState);
+    // Toggle mute state using soundManager's method
+    const newMuteStatus = soundManager.toggleMute();
+    setIsMuted(newMuteStatus);
+
+    // Play click sound if now unmuted
+    if (!newMuteStatus) {
       soundManager.play('click');
-      return newState;
-    });
+    }
   };
 
   return (
