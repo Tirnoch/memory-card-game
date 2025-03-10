@@ -6,7 +6,7 @@ A fun and challenging memory card game featuring Pokémon characters. Test your 
 
 ## 🎮 Live Demo
 
-[Play the game here](#) <!-- Add your deployment URL when available -->
+[Play the game here](https://memory-card-game-kik.pages.dev/)
 
 ## 🎯 Game Objective
 
@@ -51,7 +51,7 @@ The goal is simple: click on each Pokémon card exactly once. After each click, 
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/memory-card-game.git
+   git clone https://github.com/tirnoch/memory-card-game.git
    cd memory-card-game
    ```
 
@@ -72,16 +72,6 @@ The goal is simple: click on each Pokémon card exactly once. After each click, 
    ```
 
 4. Open your browser and navigate to `http://localhost:5173`
-
-## 🧪 Testing
-
-Run the tests with:
-
-```bash
-npm test
-# or
-yarn test
-```
 
 ## 📝 License
 
